@@ -19,23 +19,22 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
 
 ## En desarrollo:
 ### Productos
--  [❌] Crear un sistema de edición para los productos
--- [✔️] CRUD de productos
--- [❌] Los precios pueden variar entre tipos de productos (unidad, kilo, porción)
--- [❌] Poder cambiar el precio de una categoría/subcategoría fijando un porcentaje sobre el precio original
+- [✔️] CRUD de productos
+  - [✔️] Los precios pueden variar entre tipos de productos (unidad, kilo, porción)
+  - [❌] Poder cambiar el precio de una categoría/subcategoría fijando un porcentaje sobre el precio original
 
 ### Pantallas
 - [❌] CRUD de pantallas
-- [❌] Crear un sistema de edición para las pantallas (asignando plantillas a pantallas)
+  - [❌] Crear un sistema de edición para las pantallas (asignando plantillas a pantallas)
 
 ### Plantillas
 - [❌] CRUD de plantillas
-- [❌] Crear un sistema de edición para las plantillas (asignando productos a plantillas)
+  - [❌] Crear un sistema de edición para las plantillas (asignando productos a plantillas)
 
 ### Locales
 - [❌] CRUD de locales
-- [❌] Crear un sistema de edición para los locales (asignando pantallas a locales)
+  - [❌] Crear un sistema de edición para los locales (asignando pantallas a locales)
 
 ### Usuarios
 - [❌] CRUD de usuarios
-- [❌] Crear un sistema de edición para los usuarios (asignando roles a usuarios)
+  - [❌] Crear un sistema de edición para los usuarios (asignando roles a usuarios)

@@ -20,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+
 import { Label } from "./ui/label";
 
 export default function ProductoEditDrawer({
@@ -29,12 +30,18 @@ export default function ProductoEditDrawer({
   onClose,
   onProductUpdated,
 }) {
+  const { toast } = useToast();
+
   const [producto, setProducto] = useState(null);
   const [categorias, setCategorias] = useState([]);
   const [subcategorias, setSubcategorias] = useState([]);
   const { register, handleSubmit, setValue, watch, reset } = useForm();
 
   const isNewProduct = !productId;
+
+  const [unidadMedida, setUnidadMedida] = useState("Kg."); // Estado para unidad de medida
+  const [titulosVariantes, setTitulosVariantes] = useState([]); // Estado para títulos de variantes
+  const [precios, setPrecios] = useState({}); // Estado para precios
 
   useEffect(() => {
     if (isOpen) {
@@ -46,9 +53,6 @@ export default function ProductoEditDrawer({
         reset({
           nombre: "",
           descripcion: "",
-          precioChico: "",
-          precioMediano: "",
-          precioGrande: "",
           categoria: "",
           subcategoria: "",
         });
@@ -66,14 +70,18 @@ export default function ProductoEditDrawer({
       // Establecer los valores del formulario
       setValue("nombre", data.attributes.nombre);
       setValue("descripcion", data.attributes.descripcion);
-      setValue("precioChico", data.attributes.precios.Chico);
-      setValue("precioMediano", data.attributes.precios.Mediano);
-      setValue("precioGrande", data.attributes.precios.Grande);
       setValue("categoria", data.attributes.categoria.data?.id.toString());
       setValue(
         "subcategoria",
         data.attributes.subcategoria.data?.id.toString()
       );
+
+      // Establecer precios y unidad de medida
+      const preciosData = data.attributes.precios || {};
+      setPrecios(preciosData);
+      const unidad = data.attributes.unidadMedida || "Kg.";
+      setUnidadMedida(unidad);
+      setTitulosVariantes(generarTitulosVariantes(unidad));
     } catch (error) {
       console.error("Error fetching producto:", error);
       toast({
@@ -118,20 +126,22 @@ export default function ProductoEditDrawer({
 
   const onSubmit = async (data) => {
     try {
+      // Crear un objeto de precios en el formato correcto
+      const preciosFormateados = {};
+      titulosVariantes.forEach((titulo) => {
+        preciosFormateados[titulo] = precios[titulo] || ""; // Asignar el precio correspondiente
+      });
+
+      const productData = {
+        ...data,
+        precios: preciosFormateados, // Enviar precios como objeto
+        unidadMedida, // Asegurarse de enviar la unidad de medida
+      };
+
       const url = isNewProduct
         ? "/api/productos"
         : `/api/productos/${productId}`;
       const method = isNewProduct ? "POST" : "PUT";
-
-      const productData = {
-        nombre: data.nombre,
-        descripcion: data.descripcion,
-        precioChico: data.precioChico,
-        precioMediano: data.precioMediano,
-        precioGrande: data.precioGrande,
-        categoria: data.categoria,
-        subcategoria: data.subcategoria,
-      };
 
       const response = await fetch(url, {
         method: method,
@@ -139,12 +149,13 @@ export default function ProductoEditDrawer({
         body: JSON.stringify(productData),
       });
 
-      if (!response.ok)
+      if (!response.ok) {
         throw new Error(
           isNewProduct
             ? "Error al crear el producto"
             : "Error al actualizar el producto"
         );
+      }
 
       const result = await response.json();
       toast({
@@ -157,7 +168,9 @@ export default function ProductoEditDrawer({
       onClose();
     } catch (error) {
       console.error(
-        isNewProduct ? "Error creating producto:" : "Error updating producto:",
+        isNewProduct
+          ? "Error creando producto:"
+          : "Error actualizando producto:",
         error
       );
       toast({
@@ -168,6 +181,44 @@ export default function ProductoEditDrawer({
         variant: "destructive",
       });
     }
+  };
+
+  const generarTitulosVariantes = (unidad) => {
+    switch (unidad) {
+      case "Kg.":
+        return ["1/4 Kg.", "1/2 Kg.", "1 Kg."];
+      case "Unidad":
+        return ["C/U", "1/2 Doc.", "1 Doc."];
+      case "Porcion":
+        return ["Chico", "Mediano", "Grande"];
+      default:
+        return [];
+    }
+  };
+
+  // Actualizar el efecto para establecer los títulos y precios
+  useEffect(() => {
+    if (producto) {
+      const unidad = producto.attributes.unidadMedida || "Kg.";
+      setUnidadMedida(unidad);
+      setTitulosVariantes(generarTitulosVariantes(unidad));
+      setPrecios(producto.attributes.precios || {});
+    }
+  }, [producto]);
+
+  // En la función handleUnidadMedidaChange
+  const handleUnidadMedidaChange = (value) => {
+    const unidad = value; // Cambiar a recibir el valor directamente
+    setUnidadMedida(unidad);
+    const nuevosTitulos = generarTitulosVariantes(unidad);
+    setTitulosVariantes(nuevosTitulos);
+
+    // Inicializar precios como un objeto vacío
+    const nuevosPrecios = {};
+    nuevosTitulos.forEach((titulo) => {
+      nuevosPrecios[titulo] = ""; // Inicializar cada precio como vacío
+    });
+    setPrecios(nuevosPrecios); // Guardar precios como objeto
   };
 
   return (
@@ -188,7 +239,7 @@ export default function ProductoEditDrawer({
           </DrawerHeader>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4 p-4">
-              <div className="flex  gap-3">
+              <div className="flex gap-3">
                 <div className="flex-1 w-1/2">
                   <Label>Nombre</Label>
                   <Input
@@ -209,44 +260,47 @@ export default function ProductoEditDrawer({
                 </div>
               </div>
 
-              <div className="flex  gap-3">
-                <div className="flex-1 w-1/3">
-                  <Label>Precio Chico</Label>
-                  <Input
-                    {...register("precioChico")}
-                    type="number"
-                    step="0.25"
-                    min="0"
-                    max="999999.99"
-                    placeholder="0.00"
-                    inputMode="decimal"
-                    defaultValue={producto?.attributes.precios.Chico || ""}
-                  />
+              <div className="flex gap-3">
+                <div className="flex-1 w-1/2">
+                  <Label>Unidad de Medida</Label>
+                  <Select
+                    onValueChange={handleUnidadMedidaChange}
+                    value={unidadMedida}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona una unidad de medida" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Kg.">Kg.</SelectItem>
+                      <SelectItem value="Unidad">Unidad</SelectItem>
+                      <SelectItem value="Porcion">Porción</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex-1 w-1/3">
-                  <Label>Precio Mediano</Label>
-                  <Input
-                    {...register("precioMediano")}
-                    type="number"
-                    step="0.25"
-                    min="0"
-                    max="999999.99"
-                    placeholder="0.00"
-                    inputMode="decimal"
-                  />
-                </div>
-                <div className="flex-1 w-1/3">
-                  <Label>Precio Grande</Label>
-                  <Input
-                    {...register("precioGrande")}
-                    type="number"
-                    step="0.25"
-                    min="0"
-                    max="999999.99"
-                    placeholder="0.00"
-                    inputMode="decimal"
-                  />
-                </div>
+              </div>
+
+              <div className="flex gap-3">
+                {titulosVariantes.map((titulo, index) => (
+                  <div className="flex-1" key={index}>
+                    <Label>{titulo}</Label>
+                    <Input
+                      {...register(`precios.${titulo}`)}
+                      type="number"
+                      step="0.25"
+                      min="0"
+                      max="999999.99"
+                      placeholder="0.00"
+                      inputMode="decimal"
+                      defaultValue={precios[titulo] || ""}
+                      onChange={(e) => {
+                        setPrecios((prev) => ({
+                          ...prev,
+                          [titulo]: e.target.value,
+                        }));
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
 
               <div className="flex gap-3">

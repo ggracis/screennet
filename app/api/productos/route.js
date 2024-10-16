@@ -74,17 +74,15 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const body = await request.json();
   try {
-    const body = await request.json();
+    // Preparar los datos para la creación
     const createData = {
       data: {
         nombre: body.nombre,
         descripcion: body.descripcion,
-        precios: {
-          Chico: body.precioChico,
-          Mediano: body.precioMediano,
-          Grande: body.precioGrande,
-        },
+        precios: body.precios, // Usar directamente el objeto de precios
+        unidadMedida: body.unidadMedida, // Asegurarse de enviar la unidad de medida
         categoria: body.categoria
           ? { connect: [{ id: parseInt(body.categoria) }] }
           : null,

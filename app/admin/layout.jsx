@@ -4,6 +4,7 @@ import LoginForm from "@/components/LoginForm";
 import useAuthStore from "@/stores/useAuthStore";
 import Navbar from "@/components/admin/navbar";
 import Link from "next/link";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function AdminLayout({ children }) {
   const { user, loading, fetchUser } = useAuthStore();
@@ -32,6 +33,7 @@ export default function AdminLayout({ children }) {
         </header>
         {children}
       </div>
+      <Toaster />
     </div>
   );
 }

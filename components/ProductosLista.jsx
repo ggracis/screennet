@@ -47,7 +47,7 @@ import {
   SelectLabel,
   SelectGroup,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -203,38 +203,51 @@ export default function ProductosLista() {
       ),
     },
     {
-      id: "precioChico",
-      header: "Precio Chico",
-      accessorFn: (row) => row.attributes.precios.Chico,
+      id: "unidadMedida",
+      header: "Unidad de Medida",
+      accessorFn: (row) => row.attributes.unidadMedida,
       cell: ({ row }) => (
-        <div className="text-left pl-4">${row.attributes.precios.Chico}</div>
+        <div className="text-left pl-4">{row.attributes.unidadMedida}</div>
       ),
     },
     {
-      id: "precioMediano",
-      header: "Precio Mediano",
-      accessorFn: (row) => row.attributes.precios.Mediano,
+      id: "precio1",
+      header: "Precio 1",
+      accessorFn: (row) => Object.values(row.attributes.precios)[0] || "N/A", // Accede al primer precio
       cell: ({ row }) => (
         <div className="text-left pl-4">
-          ${row.attributes.precios.Mediano || "N/A"}
+          {Object.values(row.attributes.precios)[0] || "N/A"}
         </div>
       ),
     },
     {
-      id: "precioGrande",
-      header: "Precio Grande",
-      accessorFn: (row) => row.attributes.precios.Grande,
+      id: "precio2",
+      header: "Precio 2",
+      accessorFn: (row) => Object.values(row.attributes.precios)[1] || "N/A", // Accede al segundo precio
       cell: ({ row }) => (
-        <div className="text-left pl-4">${row.attributes.precios.Grande}</div>
+        <div className="text-left pl-4">
+          {Object.values(row.attributes.precios)[1] || "N/A"}
+        </div>
+      ),
+    },
+    {
+      id: "precio3",
+      header: "Precio 3",
+      accessorFn: (row) => Object.values(row.attributes.precios)[2] || "N/A", // Accede al tercer precio
+      cell: ({ row }) => (
+        <div className="text-left pl-4">
+          {Object.values(row.attributes.precios)[2] || "N/A"}
+        </div>
       ),
     },
     {
       id: "categoria",
       header: "Categoría",
-      accessorFn: (row) => row.attributes.categoria.data.attributes.nombre,
+      accessorFn: (row) =>
+        row.attributes.categoria?.data?.attributes?.nombre || "N/A",
       cell: ({ row }) => (
         <div className="text-left pl-4">
-          {row.attributes.categoria.data.attributes.nombre}
+          {row.attributes.categoria?.data?.attributes?.nombre || "N/A"}
         </div>
       ),
     },
@@ -242,14 +255,10 @@ export default function ProductosLista() {
       id: "subcategoria",
       header: "Subcategoría",
       accessorFn: (row) =>
-        row.attributes.subcategoria.data
-          ? row.attributes.subcategoria.data.attributes.nombre
-          : "N/A",
+        row.attributes.subcategoria?.data?.attributes?.nombre || "N/A",
       cell: ({ row }) => (
         <div className="text-left pl-4">
-          {row.attributes.subcategoria.data
-            ? row.attributes.subcategoria.data.attributes.nombre
-            : "N/A"}
+          {row.attributes.subcategoria?.data?.attributes?.nombre || "N/A"}
         </div>
       ),
     },
