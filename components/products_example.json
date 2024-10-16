@@ -1,0 +1,818 @@
+{
+  "data": [
+    {
+      "id": 1349,
+      "attributes": {
+        "nombre": "Pasta frola membrillo",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2500",
+          "Mediano": "",
+          "Grande": "3000"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.571Z",
+        "updatedAt": "2023-11-21T00:16:31.571Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1350,
+      "attributes": {
+        "nombre": "Pasta frola batata",
+        "descripcion": "Con abundante dulce de batata como Dios manda!",
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2500",
+          "Mediano": "",
+          "Grande": "3000"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.590Z",
+        "updatedAt": "2023-11-21T22:11:10.122Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 7,
+            "attributes": {
+              "nombre": "Pastelería",
+              "createdAt": "2023-09-21T22:33:15.447Z",
+              "updatedAt": "2023-09-21T23:33:18.300Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-09-21T22:35:19.572Z",
+              "updatedAt": "2023-09-21T23:33:18.392Z"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 1351,
+      "attributes": {
+        "nombre": "Pasta frola dulce de leche",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2700",
+          "Mediano": "",
+          "Grande": "3200"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.608Z",
+        "updatedAt": "2023-11-21T00:16:31.608Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1352,
+      "attributes": {
+        "nombre": "Pasta frola pastelera",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2500",
+          "Mediano": "",
+          "Grande": "3000"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.623Z",
+        "updatedAt": "2023-11-21T00:16:31.623Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1353,
+      "attributes": {
+        "nombre": "Tarta de ricota y pastelera",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "3000",
+          "Mediano": "",
+          "Grande": "3500"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.640Z",
+        "updatedAt": "2023-11-21T00:16:31.640Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1354,
+      "attributes": {
+        "nombre": "Tarta de ricota y duraznos",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2700",
+          "Mediano": "",
+          "Grande": "3200"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.656Z",
+        "updatedAt": "2023-11-21T00:16:31.656Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1355,
+      "attributes": {
+        "nombre": "Tarta de ricota",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "3000",
+          "Mediano": "",
+          "Grande": "3500"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.671Z",
+        "updatedAt": "2023-11-21T00:16:31.671Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1356,
+      "attributes": {
+        "nombre": "Tarta de ricota y dulce de leche",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "3000",
+          "Mediano": "",
+          "Grande": "3500"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.708Z",
+        "updatedAt": "2023-11-21T00:16:31.708Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1357,
+      "attributes": {
+        "nombre": "Tarta de ricota y coco",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "3000",
+          "Mediano": "",
+          "Grande": "3500"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.725Z",
+        "updatedAt": "2023-11-21T00:16:31.725Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1358,
+      "attributes": {
+        "nombre": "Soufle de manzana",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2700",
+          "Mediano": "",
+          "Grande": "3200"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.743Z",
+        "updatedAt": "2023-11-21T00:16:31.743Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1359,
+      "attributes": {
+        "nombre": "Pastel de manzana",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2700",
+          "Mediano": "",
+          "Grande": "3200"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.760Z",
+        "updatedAt": "2023-11-21T00:16:31.760Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1360,
+      "attributes": {
+        "nombre": "Stroicel de manzana",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2700",
+          "Mediano": "",
+          "Grande": "3200"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.782Z",
+        "updatedAt": "2023-11-21T00:16:31.782Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1361,
+      "attributes": {
+        "nombre": "Tarta de coco y manzana",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "3000",
+          "Mediano": "",
+          "Grande": "3500"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.802Z",
+        "updatedAt": "2023-11-21T00:16:31.802Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1362,
+      "attributes": {
+        "nombre": "Tarta de coco",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "3000",
+          "Mediano": "",
+          "Grande": "3500"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.825Z",
+        "updatedAt": "2023-11-21T00:16:31.825Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1363,
+      "attributes": {
+        "nombre": "Tarta de cerezas y manzana",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "3000",
+          "Mediano": "",
+          "Grande": "3500"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.845Z",
+        "updatedAt": "2023-11-21T00:16:31.845Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1364,
+      "attributes": {
+        "nombre": "Pastelera y dulce de leche",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "3000",
+          "Mediano": "",
+          "Grande": "3500"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.865Z",
+        "updatedAt": "2023-11-21T00:16:31.865Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1365,
+      "attributes": {
+        "nombre": "Diplomático",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "3500",
+          "Mediano": "",
+          "Grande": "4000"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.883Z",
+        "updatedAt": "2023-11-21T00:16:31.883Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1366,
+      "attributes": {
+        "nombre": "Brownie",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "3400",
+          "Mediano": "",
+          "Grande": "3800"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.900Z",
+        "updatedAt": "2023-11-21T00:16:31.900Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1367,
+      "attributes": {
+        "nombre": "Brownie alfajor",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "3800",
+          "Mediano": "",
+          "Grande": "4000"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.919Z",
+        "updatedAt": "2023-11-21T00:16:31.919Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 12,
+            "attributes": {
+              "nombre": "Tarta",
+              "createdAt": "2023-11-20T23:59:45.246Z",
+              "updatedAt": "2023-11-20T23:59:45.246Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1368,
+      "attributes": {
+        "nombre": "Mil hojas",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2800",
+          "Mediano": "",
+          "Grande": "3200"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.935Z",
+        "updatedAt": "2023-11-21T00:16:31.935Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 13,
+            "attributes": {
+              "nombre": "Hojaldre",
+              "createdAt": "2023-11-20T23:59:52.889Z",
+              "updatedAt": "2023-11-20T23:59:52.889Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1369,
+      "attributes": {
+        "nombre": "Cabezón",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2800",
+          "Mediano": "",
+          "Grande": "3200"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.952Z",
+        "updatedAt": "2023-11-21T00:16:31.952Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 13,
+            "attributes": {
+              "nombre": "Hojaldre",
+              "createdAt": "2023-11-20T23:59:52.889Z",
+              "updatedAt": "2023-11-20T23:59:52.889Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1370,
+      "attributes": {
+        "nombre": "Hojaldre con manzana",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "",
+          "Mediano": "",
+          "Grande": "2800"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.972Z",
+        "updatedAt": "2023-11-21T00:16:31.972Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 13,
+            "attributes": {
+              "nombre": "Hojaldre",
+              "createdAt": "2023-11-20T23:59:52.889Z",
+              "updatedAt": "2023-11-20T23:59:52.889Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1371,
+      "attributes": {
+        "nombre": "Persianas membrillo",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2000",
+          "Mediano": "",
+          "Grande": "2500"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:31.989Z",
+        "updatedAt": "2023-11-21T00:16:31.989Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 13,
+            "attributes": {
+              "nombre": "Hojaldre",
+              "createdAt": "2023-11-20T23:59:52.889Z",
+              "updatedAt": "2023-11-20T23:59:52.889Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1372,
+      "attributes": {
+        "nombre": "Persianas manzana",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2000",
+          "Mediano": "",
+          "Grande": "2500"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:32.007Z",
+        "updatedAt": "2023-11-21T00:16:32.007Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 13,
+            "attributes": {
+              "nombre": "Hojaldre",
+              "createdAt": "2023-11-20T23:59:52.889Z",
+              "updatedAt": "2023-11-20T23:59:52.889Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1373,
+      "attributes": {
+        "nombre": "Cremona rellena",
+        "descripcion": null,
+        "unidadMedida": "Unidad",
+        "precios": {
+          "Chico": "2400",
+          "Mediano": "",
+          "Grande": "2800"
+        },
+        "activo": true,
+        "createdAt": "2023-11-21T00:16:32.024Z",
+        "updatedAt": "2023-11-21T00:16:32.024Z",
+        "foto": {
+          "data": null
+        },
+        "categoria": {
+          "data": {
+            "id": 13,
+            "attributes": {
+              "nombre": "Hojaldre",
+              "createdAt": "2023-11-20T23:59:52.889Z",
+              "updatedAt": "2023-11-20T23:59:52.889Z"
+            }
+          }
+        },
+        "subcategoria": {
+          "data": null
+        }
+      }
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "pageCount": 11,
+      "page": 1,
+      "total": 267
+    }
+  }
+}
