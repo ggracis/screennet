@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-import { Label } from "./ui/label";
+import { Label } from "../ui/label";
 
 export default function ProductoEditDrawer({
   productId,

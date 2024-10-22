@@ -7,6 +7,9 @@ import {
   MapPin,
   Monitor,
   Sliders,
+  LogOut,
+  Tags,
+  BrushIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -14,21 +17,28 @@ import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import useAuthStore from "@/stores/useAuthStore";
 
 export default function Navbar() {
   const pathname = usePathname();
   const [isMounted, setIsMounted] = useState(false);
+  const { setTheme, theme } = useTheme();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const { setTheme, theme } = useTheme();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
   };
 
   return (
@@ -53,7 +63,7 @@ export default function Navbar() {
           </div>
           <div className="space-y-4">
             <Button variant="ghost" className="flex items-center w-full">
-              <ShoppingCart className="h-5 w-5" />
+              <Tags className="h-5 w-5" />
               <span className="ml-2">Productos</span>
             </Button>
             <Button variant="ghost" className="flex items-center w-full">
@@ -65,11 +75,23 @@ export default function Navbar() {
               <span className="ml-2">Pantallas</span>
             </Button>
             <Button variant="ghost" className="flex items-center w-full">
+              <BrushIcon className="h-5 w-5" />
+              <span className="ml-2">Plantillas</span>
+            </Button>
+            <Button variant="ghost" className="flex items-center w-full">
               <Sliders className="h-5 w-5" />
               <span className="ml-2">Preferencias</span>
             </Button>
           </div>
           <Separator className="my-4" />
+          <Button
+            variant="ghost"
+            className="flex items-center w-full"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-5 w-5" />
+            <span className="ml-2">Cerrar sesión</span>
+          </Button>
           <div className="flex items-center space-x-2">
             <Toggle
               className="w-full"
@@ -114,8 +136,9 @@ export default function Navbar() {
                   : "ghost"
               }
               className="flex items-center w-full justify-start my-2"
+              title="Productos"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <Tags className="h-5 w-5" />
               {isSidebarOpen && <span className="ml-2">Productos</span>}
             </Button>
           </Link>
@@ -126,6 +149,7 @@ export default function Navbar() {
                 isMounted && pathname === "/admin/locales" ? "outline" : "ghost"
               }
               className="flex items-center w-full justify-start my-2"
+              title="Locales"
             >
               <MapPin className="h-5 w-5" />
               {isSidebarOpen && <span className="ml-2">Locales</span>}
@@ -140,9 +164,25 @@ export default function Navbar() {
                   : "ghost"
               }
               className="flex items-center w-full justify-start my-2"
+              title="Pantallas"
             >
               <Monitor className="h-5 w-5" />
               {isSidebarOpen && <span className="ml-2">Pantallas</span>}
+            </Button>
+          </Link>
+
+          <Link href="/admin/plantillas">
+            <Button
+              variant={
+                isMounted && pathname === "/admin/plantillas"
+                  ? "outline"
+                  : "ghost"
+              }
+              className="flex items-center w-full justify-start my-2"
+              title="Plantillas"
+            >
+              <BrushIcon className="h-5 w-5" />
+              {isSidebarOpen && <span className="ml-2">Plantillas</span>}
             </Button>
           </Link>
 
@@ -154,6 +194,7 @@ export default function Navbar() {
                   : "ghost"
               }
               className="flex items-center w-full justify-start my-2"
+              title="Preferencias"
             >
               <Sliders className="h-5 w-5" />
               {isSidebarOpen && <span className="ml-2">Preferencias</span>}
@@ -178,6 +219,15 @@ export default function Navbar() {
             </>
           )}
         </Toggle>
+        <Button
+          variant="ghost"
+          className="flex items-center w-full justify-start my-2"
+          onClick={handleLogout}
+          title="Cerrar sesión"
+        >
+          <LogOut className="h-5 w-5" />
+          {isSidebarOpen && <span className="ml-2">Cerrar sesión</span>}
+        </Button>
       </div>
     </aside>
   );

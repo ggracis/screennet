@@ -1,4 +1,4 @@
-import ProductosLista from "@/components/ProductosLista";
+import ProductosLista from "@/components/admin/ProductosLista";
 
 export async function generateMetadata() {
   return {

@@ -51,7 +51,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import ProductoEditDrawer from "@/components/ProductoEditDrawer";
+import ProductoEditDrawer from "@/components/admin/ProductoEditDrawer";
 
 export default function ProductosLista() {
   const router = useRouter();

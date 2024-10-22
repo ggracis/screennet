@@ -22,6 +22,9 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
 - [✔️] CRUD de productos
   - [✔️] Los precios pueden variar entre tipos de productos (unidad, kilo, porción)
   - [❌] Poder cambiar el precio de una categoría/subcategoría fijando un porcentaje sobre el precio original
+  
+### Marcas
+- [❌] CRUD de marca con personalización de colores, tipografía y logo
 
 ### Pantallas
 - [❌] CRUD de pantallas
