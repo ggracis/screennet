@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import useProductStore from "@/stores/useProductStore";
 
 import {
   flexRender,
@@ -54,6 +55,9 @@ import { Separator } from "@/components/ui/separator";
 import ProductoEditDrawer from "@/components/admin/ProductoEditDrawer";
 
 export default function ProductosLista() {
+  const { products, addProduct, updateProduct, deleteProduct } =
+    useProductStore();
+
   const router = useRouter();
   const { toast } = useToast();
 
@@ -102,8 +106,9 @@ export default function ProductosLista() {
     setEditProductId(null);
   };
 
-  const handleProductUpdated = () => {
-    fetchProductos(currentPage);
+  const handleProductUpdated = (updatedProduct) => {
+    updateProduct(updatedProduct); // Actualiza el producto en el store
+    fetchProductos(currentPage); // Opcional: refresca la lista desde la API
   };
 
   const handleDeleteProduct = async (productId) => {
@@ -126,8 +131,9 @@ export default function ProductosLista() {
         description: "Producto eliminado correctamente",
       });
 
-      // Actualizar la lista de productos
-      fetchProductos(currentPage);
+      // Actualizar la lista de productos en el store
+      deleteProduct(productToDelete);
+      fetchProductos(currentPage); // Opcional: refresca la lista desde la API
     } catch (error) {
       console.error("Error deleting producto:", error);
       toast({

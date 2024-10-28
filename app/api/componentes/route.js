@@ -6,6 +6,7 @@ export async function GET() {
     const res = await fetch(`${process.env.STRAPI_API_URL}/componentes`, {
       headers: {
         Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+        cache: "no-store",
       },
     });
 

@@ -10,25 +10,25 @@ export async function GET(request, { params }) {
       cache: "no-store",
     };
 
-    console.log(`Obteniendo datos de la plantilla ${id}`);
+    console.log(`Obteniendo datos de la pantalla ${id}`);
 
-    const plantillaResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/plantillas/${id}?populate=*&timestamp=${timestamp}`,
+    const pantallaResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/pantallas/${id}?timestamp=${timestamp}&populate=*`,
       { headers }
     );
 
-    if (!plantillaResponse.ok) {
+    if (!pantallaResponse.ok) {
       throw new Error(
-        `Error al obtener datos de la plantilla: ${plantillaResponse.status} ${plantillaResponse.statusText}`
+        `Error al obtener datos de la pantalla: ${pantallaResponse.status} ${pantallaResponse.statusText}`
       );
     }
 
-    const plantillaData = await plantillaResponse.json();
-    console.log(`Datos de la plantilla obtenidos:`, plantillaData);
+    const pantallaData = await pantallaResponse.json();
+    console.log(`Datos de la pantalla obtenidos:`, pantallaData);
 
-    return NextResponse.json({ plantilla: plantillaData.data });
+    return NextResponse.json({ pantalla: pantallaData.data });
   } catch (error) {
-    console.error("Error en la obtención de datos de la plantilla:", error);
+    console.error("Error en la obtención de datos de la pantalla:", error);
     return NextResponse.json(
       { error: "Error interno del servidor", details: error.message },
       { status: 500 }
@@ -46,19 +46,17 @@ export async function PUT(request, { params }) {
       "Content-Type": "application/json",
     };
 
-    console.log(`Actualizando datos de la plantilla ${id}`);
+    console.log(`Actualizando datos de la pantalla ${id}`);
     console.log("Datos recibidos:", JSON.stringify(body, null, 2));
 
-    const { nombre, descripcion, columnas, filas, componentes } =
-      body.data || {};
+    const { nombre, descripcion, plantilla_horario, local } = body.data || {};
 
     const updateData = {
       data: {
         nombre,
         descripcion,
-        columnas,
-        filas,
-        componentes,
+        plantilla_horario,
+        local,
       },
     };
 
@@ -68,7 +66,7 @@ export async function PUT(request, { params }) {
     );
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/plantillas/${id}`,
+      `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/pantallas/${id}`,
       {
         method: "PUT",
         headers,

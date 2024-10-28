@@ -43,8 +43,8 @@ export default function Navbar() {
 
   return (
     <aside
-      className={`transition-all duration-300 ease-in-out bg-muted/40 border-r flex flex-col 
-      w-20 h-screen pr-2 ${isSidebarOpen ? "md:w-40" : "md:w-20"} `}
+      className={`min-h-screen transition-all duration-300 ease-in-out bg-muted/40 border-r flex flex-col 
+      w-20 pr-2 ${isSidebarOpen ? "md:w-40" : "md:w-20"} `}
     >
       {/* Navbar para móviles */}
       <div className="flex justify-between items-center p-4 md:hidden">
@@ -55,17 +55,13 @@ export default function Navbar() {
 
       {/* Sidebar para dispositivos móviles */}
       {isSidebarOpen && (
-        <nav className="fixed top-0 left-0 w-50 h-full bg-muted/90 shadow-lg p-4 md:hidden z-50">
+        <nav className="fixed top-0 left-0 w-50 h-screen bg-muted/90 shadow-lg p-4 md:hidden z-50">
           <div className="flex justify-end mb-4 h-5 w-5">
             <Button variant="outline" size="icon" onClick={toggleSidebar}>
               <Layout className="h-6 w-6" />
             </Button>
           </div>
           <div className="space-y-4">
-            <Button variant="ghost" className="flex items-center w-full">
-              <Tags className="h-5 w-5" />
-              <span className="ml-2">Productos</span>
-            </Button>
             <Button variant="ghost" className="flex items-center w-full">
               <MapPin className="h-5 w-5" />
               <span className="ml-2">Locales</span>
@@ -77,6 +73,10 @@ export default function Navbar() {
             <Button variant="ghost" className="flex items-center w-full">
               <BrushIcon className="h-5 w-5" />
               <span className="ml-2">Plantillas</span>
+            </Button>
+            <Button variant="ghost" className="flex items-center w-full">
+              <Tags className="h-5 w-5" />
+              <span className="ml-2">Productos</span>
             </Button>
             <Button variant="ghost" className="flex items-center w-full">
               <Sliders className="h-5 w-5" />
@@ -128,25 +128,12 @@ export default function Navbar() {
           <Layout className="h-5 w-5" />
         </Button>
         <nav className="space-y-4 gap-4 ">
-          <Link href="/admin/productos">
-            <Button
-              variant={
-                isMounted && pathname === "/admin/productos"
-                  ? "outline"
-                  : "ghost"
-              }
-              className="flex items-center w-full justify-start my-2"
-              title="Productos"
-            >
-              <Tags className="h-5 w-5" />
-              {isSidebarOpen && <span className="ml-2">Productos</span>}
-            </Button>
-          </Link>
-
           <Link href="/admin/locales">
             <Button
               variant={
-                isMounted && pathname === "/admin/locales" ? "outline" : "ghost"
+                isMounted && pathname.startsWith("/admin/locales")
+                  ? "outline"
+                  : "ghost"
               }
               className="flex items-center w-full justify-start my-2"
               title="Locales"
@@ -159,7 +146,7 @@ export default function Navbar() {
           <Link href="/admin/pantallas">
             <Button
               variant={
-                isMounted && pathname === "/admin/pantallas"
+                isMounted && pathname.startsWith("/admin/pantallas")
                   ? "outline"
                   : "ghost"
               }
@@ -174,7 +161,7 @@ export default function Navbar() {
           <Link href="/admin/plantillas">
             <Button
               variant={
-                isMounted && pathname === "/admin/plantillas"
+                isMounted && pathname.startsWith("/admin/plantillas")
                   ? "outline"
                   : "ghost"
               }
@@ -186,10 +173,25 @@ export default function Navbar() {
             </Button>
           </Link>
 
+          <Link href="/admin/productos">
+            <Button
+              variant={
+                isMounted && pathname.startsWith("/admin/productos")
+                  ? "outline"
+                  : "ghost"
+              }
+              className="flex items-center w-full justify-start my-2"
+              title="Productos"
+            >
+              <Tags className="h-5 w-5" />
+              {isSidebarOpen && <span className="ml-2">Productos</span>}
+            </Button>
+          </Link>
+
           <Link href="/admin/preferencias">
             <Button
               variant={
-                isMounted && pathname === "/admin/preferencias"
+                isMounted && pathname.startsWith("/admin/preferencias")
                   ? "outline"
                   : "ghost"
               }

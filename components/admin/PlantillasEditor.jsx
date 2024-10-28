@@ -16,12 +16,14 @@ import {
 import { Separator } from "@/components/ui/separator";
 import ProductosBuscador from "./ProductosBuscador";
 
-const PlantillasEditor = () => {
+const PlantillasEditor = ({ isNewPlantilla }) => {
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
+
   const { toast } = useToast();
 
+  const [isLoading, setIsLoading] = useState(true);
   const [plantilla, setPlantilla] = useState(null);
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -37,15 +39,20 @@ const PlantillasEditor = () => {
   const [espacios, setEspacios] = useState({});
   const [headerComponente, setHeaderComponente] = useState("");
   const [footerComponente, setFooterComponente] = useState("");
-
   const [configComponentes, setConfigComponentes] = useState({});
+  const [selectedProducts, setSelectedProducts] = useState([]);
 
   useEffect(() => {
-    if (id) {
-      fetchPlantilla();
-      fetchComponentes();
-    }
-  }, [id]);
+    const initializeData = async () => {
+      await fetchComponentes();
+      if (!isNewPlantilla) {
+        console.log("No es nueva plantilla");
+        await fetchPlantilla();
+      }
+      setIsLoading(false);
+    };
+    initializeData();
+  }, [isNewPlantilla]);
 
   const fetchPlantilla = async () => {
     try {
@@ -66,7 +73,6 @@ const PlantillasEditor = () => {
         setEspacios(plantillaData.componentes?.espacios || {});
         setHeaderComponente(plantillaData.componentes?.header || "");
         setFooterComponente(plantillaData.componentes?.footer || "");
-        setEspacios(plantillaData.componentes?.espacios || {});
         setConfigComponentes(
           plantillaData.componentes?.config_componentes || {}
         );
@@ -123,6 +129,73 @@ const PlantillasEditor = () => {
       ...prev,
       [index]: { ...(prev[index] || {}), productos },
     }));
+  };
+
+  const handleFileChange = async (e, type) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        return handleError("El archivo no debe superar los 5MB");
+      }
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        return handleError(
+          "Solo se permiten archivos de imagen (JPEG, PNG, GIF, WEBP)"
+        );
+      }
+
+      if (type === "imagen") {
+        setImagenFile(file);
+        setImagenPreview(URL.createObjectURL(file));
+      } else {
+        setFondoFile(file);
+        setFondoPreview(URL.createObjectURL(file));
+      }
+
+      // Subir el archivo inmediatamente
+      await uploadFile(file, type);
+    }
+  };
+
+  const uploadFile = async (file, type) => {
+    const formData = new FormData();
+    formData.append("files", file);
+    formData.append("ref", "api::plantilla.plantilla");
+    formData.append("refId", id);
+    formData.append("field", type === "imagen" ? "imagen" : "fondo");
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al subir el ${type}`);
+      }
+
+      const result = await response.json();
+      console.log(`${type} subido:`, result);
+
+      // Actualizar el estado local con la nueva URL del archivo
+      if (type === "imagen") {
+        setImagen(result[0].url);
+      } else {
+        setFondo(result[0].url);
+      }
+
+      toast({
+        title: "Éxito",
+        description: `${type} actualizado correctamente`,
+      });
+    } catch (error) {
+      handleError(`Error al subir el ${type}`, error);
+    }
   };
 
   const renderComponenteSelects = () => {
@@ -185,7 +258,7 @@ const PlantillasEditor = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const updatedPlantilla = {
+    const plantillaData = {
       data: {
         nombre,
         descripcion,
@@ -201,42 +274,52 @@ const PlantillasEditor = () => {
     };
 
     try {
-      const response = await fetch(`/api/plantillas/${id}`, {
-        method: "PUT",
+      const url = isNewPlantilla ? "/api/plantillas" : `/api/plantillas/${id}`;
+      const method = isNewPlantilla ? "POST" : "PUT";
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedPlantilla),
+        body: JSON.stringify(plantillaData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.error || "Error desconocido al actualizar la plantilla"
+          errorData.error || "Error desconocido al procesar la plantilla"
         );
       }
 
-      const data = await response.json();
       toast({
         title: "Éxito",
-        description: "Plantilla actualizada correctamente",
+        description: isNewPlantilla
+          ? "Plantilla creada correctamente"
+          : "Plantilla actualizada correctamente",
       });
       router.push("/admin/plantillas");
     } catch (error) {
-      console.error("Error updating plantilla:", error);
+      console.error("Error processing plantilla:", error);
       toast({
         title: "Error",
-        description: `Error al actualizar la plantilla: ${error.message}`,
+        description: `Error al ${
+          isNewPlantilla ? "crear" : "actualizar"
+        } la plantilla: ${error.message}`,
         variant: "destructive",
       });
     }
   };
 
-  if (!plantilla) return <p>Cargando plantilla...</p>;
+  if (isLoading) return <p>Cargando...</p>;
 
   return (
     <div className="p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4">Editar Plantilla: {nombre}</h2>
+      <h2 className="text-2xl font-bold mb-4">
+        {isNewPlantilla
+          ? "Crear Nueva Plantilla"
+          : `Editar Plantilla: ${nombre}`}
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label className="block mb-2">Nombre:</Label>
@@ -396,10 +479,11 @@ const PlantillasEditor = () => {
         <div className="space-y-2">{renderComponenteSelects()}</div>
 
         <Button type="submit" variant="secondary" className="mt-4 w-full">
-          Guardar Cambios
+          {isNewPlantilla ? "Crear Plantilla" : "Guardar Cambios"}
         </Button>
       </form>
     </div>
   );
 };
+
 export default PlantillasEditor;

@@ -1,10 +1,10 @@
-// app/api/plantillas/route.js
+// app/api/pantallas/route.js
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
     const res = await fetch(
-      `${process.env.STRAPI_API_URL}/plantillas?populate=*`,
+      `${process.env.STRAPI_API_URL}/pantallas?populate=*`,
       {
         headers: {
           Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
@@ -14,30 +14,22 @@ export async function GET() {
     );
 
     if (!res.ok) {
-      throw new Error(`Error al obtener plantillas: ${res.statusText}`);
+      throw new Error(`Error al obtener pantallas: ${res.statusText}`);
     }
 
     const { data } = await res.json();
-    const plantillas = data.map((item) => ({
+    const tvs = data.map((item) => ({
       id: item.id,
       nombre: item.attributes?.nombre,
+      plantilla_horario: item.attributes?.plantilla_horario,
       descripcion: item.attributes?.descripcion,
-      columnas: item.attributes?.columnas,
-      filas: item.attributes?.filas,
-      imagen: item.attributes?.imagen?.data?.attributes?.url
-        ? `${process.env.NEXT_PUBLIC_STRAPI_URL}${item.attributes.imagen.data.attributes.url}`
-        : null,
-      fondo: item.attributes?.fondo?.data?.attributes?.url
-        ? `${process.env.NEXT_PUBLIC_STRAPI_URL}${item.attributes.fondo.data.attributes.url}`
-        : null,
-      /*  componentes: item.attributes?.componentes,
-      createdAt: item.attributes?.createdAt,
-      updatedAt: item.attributes?.updatedAt, */
+      local_id: item.attributes?.local?.data?.id,
+      local: item.attributes?.local?.data?.attributes?.nombre,
     }));
 
-    return NextResponse.json(plantillas);
+    return NextResponse.json(tvs);
   } catch (error) {
-    console.error("Error en la obtención de plantillas:", error);
+    console.error("Error en la obtención de pantallas:", error);
     return NextResponse.json(
       { error: "Error interno del servidor", details: error.message },
       { status: 500 }
@@ -54,7 +46,7 @@ export async function POST(request) {
     };
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/plantillas`,
+      `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/pantallas`,
       {
         method: "POST",
         headers,
@@ -64,14 +56,14 @@ export async function POST(request) {
 
     if (!response.ok) {
       throw new Error(
-        `Error al crear plantilla: ${response.status} ${response.statusText}`
+        `Error al crear pantalla: ${response.status} ${response.statusText}`
       );
     }
 
     const createdData = await response.json();
     return NextResponse.json(createdData);
   } catch (error) {
-    console.error("Error en la creación de plantilla:", error);
+    console.error("Error en la creación de pantalla:", error);
     return NextResponse.json(
       { error: "Error interno del servidor", details: error.message },
       { status: 500 }

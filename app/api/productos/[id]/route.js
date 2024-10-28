@@ -9,6 +9,7 @@ export async function GET(request, { params }) {
       {
         headers: {
           Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+          "Cache-Control": "no-cache",
         },
       }
     );
