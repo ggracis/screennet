@@ -295,4 +295,6 @@ const obtenerPlantillaSegunHorario = (horarios) => {
   return horarios.default.plantilla;
 };
 
+PantallasLocal.displayName = "PantallasLocal";
+
 export default PantallasLocal;
