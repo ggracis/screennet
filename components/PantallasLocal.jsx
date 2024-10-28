@@ -11,11 +11,14 @@ const PantallasLocal = ({ params }) => {
   const [error, setError] = useState(null);
   const [componentesCache, setComponentesCache] = useState({});
 
-  const ComponenteNoEncontrado = ({ nombreComponente }) => (
-    <div className="rounded-lg p-4 shadow-lg bg-gray-500/[.06] text-red-600">
-      Componente no encontrado: <strong>{nombreComponente}</strong>
-    </div>
-  );
+  const ComponenteNoEncontrado = ({ nombreComponente }) => {
+    ComponenteNoEncontrado.displayName = "ComponenteNoEncontrado";
+    return (
+      <div className="rounded-lg p-4 shadow-lg bg-gray-500/[.06] text-red-600">
+        Componente no encontrado: <strong>{nombreComponente}</strong>
+      </div>
+    );
+  };
 
   const cargarComponente = async (nombreComponente) => {
     if (componentesCache[nombreComponente]) {
