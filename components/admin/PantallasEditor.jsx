@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-
 import {
   Select,
   SelectContent,
@@ -15,76 +14,101 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import Image from "next/image";
 
-const PantallasEditor = () => {
+const PantallasEditor = ({ isNewPantalla = false }) => {
   const { toast } = useToast();
-
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
-  const [pantalla, setPantalla] = useState(null);
+
+  const [pantalla, setPantalla] = useState({
+    attributes: {
+      nombre: "",
+      descripcion: "",
+      plantilla_horario: {},
+    },
+  });
   const [plantillas, setPlantillas] = useState([]);
   const [horarios, setHorarios] = useState([]);
   const [defaultPlantilla, setDefaultPlantilla] = useState("");
+  const [locales, setLocales] = useState([]);
+  const [selectedLocal, setSelectedLocal] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
-      // Obtener datos de la pantalla
-      const pantallaResponse = await fetch(`/api/pantallas/${id}`);
-      const pantallaData = await pantallaResponse.json();
-      setPantalla(pantallaData.pantalla);
+      try {
+        // Obtener plantillas disponibles
+        const plantillasResponse = await fetch("/api/plantillas");
+        const plantillasData = await plantillasResponse.json();
+        setPlantillas(plantillasData);
 
-      // Obtener plantillas disponibles
-      const plantillasResponse = await fetch("/api/plantillas");
-      const plantillasData = await plantillasResponse.json();
-      setPlantillas(plantillasData);
-      // console.log(plantillasData);
+        // Obtener locales disponibles
+        const localesResponse = await fetch("/api/locals");
+        const localesData = await localesResponse.json();
+        setLocales(localesData);
 
-      // Configurar horarios existentes
-      if (pantallaData.pantalla.attributes.plantilla_horario) {
-        const horariosExistentes = Object.entries(
-          pantallaData.pantalla.attributes.plantilla_horario
-        )
-          .filter(([key]) => key !== "default")
-          .map(([_, value]) => ({
-            plantilla: value.plantilla.toString(),
-            dias: value.dias,
-            horaInicio: value.horas[0],
-            horaFin: value.horas[1],
-          }));
-        setHorarios(horariosExistentes);
-        setDefaultPlantilla(
-          pantallaData.pantalla.attributes.plantilla_horario.default.plantilla.toString()
-        );
+        if (!isNewPantalla && id) {
+          // Obtener datos de la pantalla solo si estamos editando
+          const pantallaResponse = await fetch(`/api/pantallas/${id}`);
+          const pantallaData = await pantallaResponse.json();
+
+          if (!pantallaData?.pantalla) {
+            toast({
+              title: "Error",
+              description: "No se pudo cargar la información de la pantalla",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          setPantalla(pantallaData.pantalla);
+
+          if (pantallaData.pantalla.attributes.plantilla_horario) {
+            const horariosExistentes = Object.entries(
+              pantallaData.pantalla.attributes.plantilla_horario
+            )
+              .filter(([key]) => key !== "default")
+              .map(([_, value]) => ({
+                plantilla: value.plantilla.toString(),
+                dias: value.dias,
+                horaInicio: value.horas[0],
+                horaFin: value.horas[1],
+              }));
+            setHorarios(horariosExistentes);
+            setDefaultPlantilla(
+              pantallaData.pantalla.attributes.plantilla_horario.default.plantilla.toString()
+            );
+          }
+          if (pantallaData.pantalla.attributes.local?.data?.id) {
+            setSelectedLocal(
+              pantallaData.pantalla.attributes.local.data.id.toString()
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error al cargar los datos:", error);
+        toast({
+          title: "Error",
+          description: "Ocurrió un error al cargar los datos",
+          variant: "destructive",
+        });
       }
     };
 
-    if (id) {
-      fetchData();
-    }
-  }, [id]);
-
-  const handleAddHorario = () => {
-    setHorarios([
-      ...horarios,
-      { plantilla: "", dias: [], horaInicio: "00:00", horaFin: "23:59" },
-    ]);
-  };
-
-  const handleHorarioChange = (index, field, value) => {
-    const newHorarios = [...horarios];
-    newHorarios[index][field] = value;
-    setHorarios(newHorarios);
-  };
-
-  const handleRemoveHorario = (index) => {
-    const newHorarios = horarios.filter((_, i) => i !== index);
-    setHorarios(newHorarios);
-  };
+    fetchData();
+  }, [id, isNewPantalla]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!selectedLocal) {
+      toast({
+        title: "Error",
+        description: "Debe seleccionar un local para la pantalla",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (verificarSuperposicion()) {
       toast({
@@ -93,19 +117,9 @@ const PantallasEditor = () => {
           "Hay superposición en los horarios. Por favor, revise los rangos de tiempo.",
         variant: "destructive",
       });
-
       return;
     }
 
-    if (horarios.some((horario) => horario.dias.length === 0)) {
-      toast({
-        title: "Error",
-        description:
-          "Todos los horarios deben tener al menos un día seleccionado.",
-        variant: "destructive",
-      });
-      return;
-    }
     const plantillaHorario = {
       default: { plantilla: parseInt(defaultPlantilla) },
       ...horarios.reduce((acc, horario, index) => {
@@ -123,11 +137,15 @@ const PantallasEditor = () => {
         nombre: pantalla.attributes.nombre,
         descripcion: pantalla.attributes.descripcion,
         plantilla_horario: plantillaHorario,
+        local: selectedLocal,
       },
     };
 
-    const response = await fetch(`/api/pantallas/${id}`, {
-      method: "PUT",
+    const url = isNewPantalla ? "/api/pantallas" : `/api/pantallas/${id}`;
+    const method = isNewPantalla ? "POST" : "PUT";
+
+    const response = await fetch(url, {
+      method: method,
       headers: {
         "Content-Type": "application/json",
       },
@@ -137,8 +155,30 @@ const PantallasEditor = () => {
     if (response.ok) {
       router.push("/admin/pantallas");
     } else {
-      console.error("Error al actualizar la pantalla");
+      toast({
+        title: "Error",
+        description: "Error al guardar la pantalla",
+        variant: "destructive",
+      });
     }
+  };
+
+  const handleAddHorario = () => {
+    setHorarios([
+      ...horarios,
+      { plantilla: "", dias: [], horaInicio: "00:00", horaFin: "23:59" },
+    ]);
+  };
+
+  const handleHorarioChange = (index, field, value) => {
+    const newHorarios = [...horarios];
+    newHorarios[index][field] = value;
+    setHorarios(newHorarios);
+  };
+
+  const handleRemoveHorario = (index) => {
+    const newHorarios = horarios.filter((_, i) => i !== index);
+    setHorarios(newHorarios);
   };
 
   const verificarSuperposicion = () => {
@@ -168,7 +208,7 @@ const PantallasEditor = () => {
     return false; // No hay superposición
   };
 
-  if (!pantalla) return <div>Cargando...</div>;
+  if (!pantalla?.attributes) return <div>Cargando...</div>;
 
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -186,6 +226,22 @@ const PantallasEditor = () => {
             })
           }
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="local">Local</Label>
+        <Select onValueChange={setSelectedLocal} value={selectedLocal}>
+          <SelectTrigger>
+            <SelectValue placeholder="Seleccionar local" />
+          </SelectTrigger>
+          <SelectContent>
+            {locales.map((local) => (
+              <SelectItem key={local.id} value={local.id.toString()}>
+                {local.attributes.nombre}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">

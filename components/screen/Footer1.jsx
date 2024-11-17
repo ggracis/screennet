@@ -1,60 +1,45 @@
 import { useEffect, useState } from "react";
-import { Carousel } from "@/components/ui/carousel";
+import { useParams } from "next/navigation";
 
-const Footer1 = ({ localId }) => {
+const Footer1 = () => {
+  const params = useParams();
   const [local, setLocal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchLocalData = async () => {
-      console.log("Iniciando fetch de local con ID:", localId);
-
-      if (!localId) {
-        console.warn("No se recibió localId");
-        setError("ID de local no proporcionado");
-        setLoading(false);
-        return;
-      }
-
       try {
-        const response = await fetch(`/api/locals/${localId}`);
-        console.log("Respuesta de la API:", {
-          status: response.status,
-          ok: response.ok,
-          url: response.url,
-        });
+        // Obtenemos los datos de la pantalla usando el ID de los params
+        const pantallaRes = await fetch(`/api/pantallas/${params.id}`);
+        const { pantalla } = await pantallaRes.json();
 
-        if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status}`);
+        const localId = pantalla.attributes.local.data.id;
+
+        if (!localId) {
+          throw new Error("ID de local no encontrado en la pantalla");
         }
 
-        const data = await response.json();
-        console.log("Datos del local recibidos:", {
-          data,
-          timestamp: new Date().toISOString(),
-        });
-
-        if (!data.local) {
-          throw new Error("Datos del local no encontrados en la respuesta");
+        const localRes = await fetch(`/api/locals/${localId}`);
+        if (!localRes.ok) {
+          throw new Error(`Error HTTP: ${localRes.status}`);
         }
 
-        setLocal(data.local);
+        const { local: localData } = await localRes.json();
+        setLocal(localData);
         setError(null);
       } catch (error) {
-        console.error("Error cargando datos del local:", {
-          error: error.message,
-          localId,
-          timestamp: new Date().toISOString(),
-        });
+        console.error("Error cargando datos:", error);
         setError(error.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLocalData();
-  }, [localId]);
+    if (params.id) {
+      fetchLocalData();
+    }
+  }, [params.id]);
 
   if (loading) {
     return (

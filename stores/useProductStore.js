@@ -1,13 +1,95 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-const CACHE_DURATION = 1000 * 60 * 60; // 1 hora de caché
+const POLLING_INTERVAL = 10000; // 10 segundos
 
 const useProductStore = create(
   persist(
     (set, get) => ({
       products: [],
       lastUpdate: Date.now(),
+      pollingInterval: null,
+      loading: false,
+
+      fetchAllProducts: async () => {
+        try {
+          set({ loading: true });
+          let allProducts = [];
+          let page = 1;
+          const pageSize = 100;
+
+          while (true) {
+            const response = await fetch(
+              `/api/productos?page=${page}&pageSize=${pageSize}&populate=*`
+            );
+
+            if (!response.ok) throw new Error("Error fetching products");
+
+            const { data, meta } = await response.json();
+            allProducts = [...allProducts, ...data];
+
+            if (page >= meta.pagination.pageCount) break;
+            page++;
+          }
+
+          set({
+            products: allProducts,
+            lastUpdate: Date.now(),
+            loading: false,
+          });
+        } catch (error) {
+          console.error("Error fetching all products:", error);
+          set({ loading: false });
+        }
+      },
+
+      getProduct: (id) => {
+        return get().products.find((product) => product.id === id);
+      },
+
+      searchProducts: (term) => {
+        const products = get().products;
+        if (!term) return products;
+        return products.filter((product) =>
+          product.attributes.nombre.toLowerCase().includes(term.toLowerCase())
+        );
+      },
+
+      initializePolling: () => {
+        if (typeof window !== "undefined") {
+          const interval = setInterval(async () => {
+            try {
+              const response = await fetch(
+                `/api/productos/actualizados?lastUpdate=${get().lastUpdate}`
+              );
+              if (!response.ok) throw new Error("Error fetching updates");
+              const { data } = await response.json();
+
+              if (data && data.length > 0) {
+                set((state) => ({
+                  products: state.products.map((product) => {
+                    const updated = data.find((p) => p.id === product.id);
+                    return updated ? { ...product, ...updated } : product;
+                  }),
+                  lastUpdate: Date.now(),
+                }));
+              }
+            } catch (error) {
+              console.error("Error polling updates:", error);
+            }
+          }, POLLING_INTERVAL);
+          set({ pollingInterval: interval });
+        }
+      },
+
+      cleanup: () => {
+        const { pollingInterval } = get();
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          set({ pollingInterval: null });
+        }
+      },
+
       isStale: () => Date.now() - get().lastUpdate > CACHE_DURATION,
 
       setProducts: (products) =>
@@ -47,7 +129,16 @@ const useProductStore = create(
       updateProduct: (updatedProduct) =>
         set((state) => ({
           products: state.products.map((product) =>
-            product.id === updatedProduct.id ? updatedProduct : product
+            product.id === updatedProduct.id
+              ? {
+                  ...product,
+                  ...updatedProduct,
+                  attributes: {
+                    ...product.attributes,
+                    ...updatedProduct.attributes,
+                  },
+                }
+              : product
           ),
           lastUpdate: Date.now(),
         })),
@@ -60,8 +151,6 @@ const useProductStore = create(
           lastUpdate: Date.now(),
         })),
 
-      getProduct: (id) => get().products.find((product) => product.id === id),
-
       clearStaleData: () => {
         if (get().isStale()) {
           set({ products: [], lastUpdate: Date.now() });
@@ -73,10 +162,6 @@ const useProductStore = create(
     {
       name: "product-storage",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        products: state.products,
-        lastUpdate: state.lastUpdate,
-      }),
     }
   )
 );

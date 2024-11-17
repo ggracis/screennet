@@ -2,45 +2,76 @@
 
 import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import useProductStore from "@/stores/useProductStore";
+import useScreenStore from "@/stores/useScreenStore";
 
 const PantallasLocal = ({ params }) => {
-  const [pantalla, setPantalla] = useState(null);
-  const [plantilla, setPlantilla] = useState(null);
+  const {
+    initializePolling: initProductPolling,
+    cleanup: cleanupProducts,
+    fetchAllProducts,
+  } = useProductStore();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    pantalla,
+    plantilla,
+    loading: screenLoading,
+    error: screenError,
+    initializePolling: initScreenPolling,
+    cleanup: cleanupScreen,
+    fetchScreenData,
+  } = useScreenStore();
+
   const [componentesCache, setComponentesCache] = useState({});
 
-  const ComponenteNoEncontrado = ({ nombreComponente }) => {
-    ComponenteNoEncontrado.displayName = "ComponenteNoEncontrado";
-    return (
-      <div className="rounded-lg p-4 shadow-lg bg-gray-500/[.06] text-red-600">
-        Componente no encontrado: <strong>{nombreComponente}</strong>
-      </div>
-    );
-  };
+  useEffect(() => {
+    fetchAllProducts();
+    initProductPolling();
+    fetchScreenData(params.id);
+    initScreenPolling(params.id);
+
+    return () => {
+      cleanupProducts();
+      cleanupScreen();
+    };
+  }, [
+    params.id,
+    initProductPolling,
+    fetchScreenData,
+    initScreenPolling,
+    cleanupProducts,
+    cleanupScreen,
+    fetchAllProducts,
+  ]);
+
+  if (screenLoading) {
+    return <div>Cargando...</div>;
+  }
+
+  if (screenError) {
+    return <div>Error: {screenError}</div>;
+  }
+
+  if (!pantalla || !plantilla) {
+    return <div>No se encontraron datos de la pantalla o plantilla</div>;
+  }
+
+  const ComponenteNoEncontrado = ({ nombreComponente }) => (
+    <div className="rounded-lg p-4 shadow-lg bg-gray-500/[.06] text-red-600">
+      Componente no encontrado: <strong>{nombreComponente}</strong>
+    </div>
+  );
 
   const cargarComponente = async (nombreComponente) => {
     if (componentesCache[nombreComponente]) {
       return componentesCache[nombreComponente];
     }
 
-    /* console.log(`Intentando cargar componente: ${nombreComponente}`, {
-      tipo: "screen",
-      ruta: `@/components/screen/${nombreComponente}`,
-      timestamp: new Date().toISOString(),
-    }); */
-
     try {
       const Componente = dynamic(
         () =>
           import(`@/components/screen/${nombreComponente}`).catch(() => {
-            console.error(`Componente ${nombreComponente} no encontrado`, {
-              error: "COMPONENTE_NO_ENCONTRADO",
-              componente: nombreComponente,
-              rutaBuscada: `@/components/screen/${nombreComponente}`,
-              timestamp: new Date().toISOString(),
-            });
+            console.error(`Componente ${nombreComponente} no encontrado`);
             return Promise.resolve(() => (
               <ComponenteNoEncontrado nombreComponente={nombreComponente} />
             ));
@@ -54,166 +85,81 @@ const PantallasLocal = ({ params }) => {
         }
       );
 
-      /*  console.log(`Componente cargado exitosamente: ${nombreComponente}`, {
-        status: "SUCCESS",
-        timestamp: new Date().toISOString(),
-      }); */
-
       setComponentesCache((prev) => ({
         ...prev,
         [nombreComponente]: Componente,
       }));
       return Componente;
     } catch (error) {
-      console.error(`Error al cargar el componente ${nombreComponente}:`, {
-        error: error.message,
-        stack: error.stack,
-        componente: nombreComponente,
-        timestamp: new Date().toISOString(),
-      });
+      console.error(
+        `Error al cargar el componente ${nombreComponente}:`,
+        error
+      );
       return () => (
         <ComponenteNoEncontrado nombreComponente={nombreComponente} />
       );
     }
   };
 
-  useEffect(() => {
-    const cargarDatos = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Obtener datos de la pantalla
-        const resPantalla = await fetch(`/api/pantallas/${params.id}`);
-        if (!resPantalla.ok)
-          throw new Error("Error al cargar datos de la pantalla");
-        const { pantalla: dataPantalla } = await resPantalla.json();
-
-        console.log("Datos de pantalla cargados:", {
-          id: dataPantalla.id,
-          nombre: dataPantalla.attributes.nombre,
-          localId: dataPantalla.attributes.local.data.id,
-          timestamp: new Date().toISOString(),
-        });
-
-        setPantalla(dataPantalla);
-
-        // Obtener plantilla según horario
-        const plantillaId = obtenerPlantillaSegunHorario(
-          dataPantalla.attributes.plantilla_horario
-        );
-
-        // Obtener datos de la plantilla
-        const resPlantilla = await fetch(`/api/plantillas/${plantillaId}`);
-        if (!resPlantilla.ok)
-          throw new Error("Error al cargar datos de la plantilla");
-        const { plantilla: dataPlantilla } = await resPlantilla.json();
-
-        console.log("Datos de plantilla cargados:", {
-          id: dataPlantilla.id,
-          nombre: dataPlantilla.attributes.nombre,
-          componentes: dataPlantilla.attributes.componentes,
-          timestamp: new Date().toISOString(),
-        });
-
-        setPlantilla(dataPlantilla);
-      } catch (error) {
-        console.error("Error:", error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    cargarDatos();
-  }, [params.id]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="p-4 border border-red-200 bg-red-50 rounded-lg text-red-600">
-          Error: {error}
-        </div>
-      </div>
-    );
-  }
-
-  if (!plantilla) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-lg text-yellow-600">
-          No se encontró la plantilla
-        </div>
-      </div>
-    );
-  }
-
-  const { componentes, columnas, filas, fondo } = plantilla.attributes;
+  const { componentes } = plantilla.attributes;
 
   return (
-    <div
-      style={{
-        backgroundImage: `url(${process.env.NEXT_PUBLIC_STRAPI_URL}${fondo.data.attributes.url})`,
-        backgroundSize: "cover",
-        minHeight: "100vh",
-      }}
-      className="relative"
-    >
+    <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Header */}
-      <div className="fixed top-0 w-full z-10">
-        {componentes.header && (
-          <Suspense
-            fallback={
-              <div className="bg-gray-200 h-16">Cargando header...</div>
-            }
-          >
-            <ComponenteWrapper
-              nombreComponente={componentes.header}
-              cargarComponente={cargarComponente}
-              props={{
-                localId: pantalla?.attributes?.local?.data?.id,
-              }}
-            />
-          </Suspense>
-        )}
-      </div>
+      {componentes.header && (
+        <Suspense
+          fallback={
+            <div className="animate-pulse bg-gray-200 h-16">
+              Cargando header...
+            </div>
+          }
+        >
+          <ComponenteWrapper
+            nombreComponente={componentes.header}
+            cargarComponente={cargarComponente}
+          />
+        </Suspense>
+      )}
 
-      {/* Grid de componentes */}
+      {/* Contenido principal */}
       <div
+        className="container mx-auto p-4 grid gap-4"
         style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${columnas}, 1fr)`,
-          gridTemplateRows: `repeat(${filas}, 1fr)`,
+          gridTemplateColumns: `repeat(${plantilla.attributes.columnas}, 1fr)`,
+          gridTemplateRows: `repeat(${plantilla.attributes.filas}, 1fr)`,
+          height: "calc(100vh - 40em)",
+          minHeight: "calc(100vh - 40em)",
+          maxHeight: "calc(100vh - 40em)",
         }}
-        className="gap-4 p-4 mt-20 mb-20"
       >
         {Object.entries(componentes.espacios).map(([espacio, componente]) => {
           const config = componentes.config_componentes[espacio];
-
           return (
             <Suspense
               key={espacio}
               fallback={
                 <div className="animate-pulse bg-gray-200 rounded-lg p-4">
-                  Cargando espacio {espacio}...
+                  Cargando...
                 </div>
               }
             >
-              <ComponenteWrapper
-                nombreComponente={componente}
-                cargarComponente={cargarComponente}
-                props={{
-                  productos: config.productos,
-                  titulo: config.titulo,
+              <div
+                style={{
+                  gridRow: `span ${config.rowSpan || 1}`,
+                  gridColumn: `span ${config.colSpan || 1}`,
                 }}
-              />
+              >
+                <ComponenteWrapper
+                  nombreComponente={componente}
+                  cargarComponente={cargarComponente}
+                  props={{
+                    productos: config.productos,
+                    titulo: config.titulo,
+                    rowSpan: config.rowSpan || 1,
+                    colSpan: config.colSpan || 1,
+                  }}
+                />
+              </div>
             </Suspense>
           );
         })}
@@ -243,7 +189,6 @@ const PantallasLocal = ({ params }) => {
   );
 };
 
-// Componente auxiliar para manejar la carga asíncrona
 const ComponenteWrapper = ({
   nombreComponente,
   cargarComponente,
@@ -259,12 +204,6 @@ const ComponenteWrapper = ({
         setComponente(() => ComponenteCargado);
       } catch (err) {
         setError(err);
-        console.error(`Error en ComponenteWrapper: ${nombreComponente}`, {
-          error: err.message,
-          componente: nombreComponente,
-          props,
-          timestamp: new Date().toISOString(),
-        });
       }
     };
     cargar();
@@ -276,28 +215,5 @@ const ComponenteWrapper = ({
 
   return <Componente {...props} />;
 };
-
-// Función auxiliar para determinar la plantilla según horario
-const obtenerPlantillaSegunHorario = (horarios) => {
-  const ahora = new Date();
-  const dia = ["0", "1", "l", "m", "x", "j", "v"][ahora.getDay()];
-  const hora = `${ahora.getHours().toString().padStart(2, "0")}:${ahora
-    .getMinutes()
-    .toString()
-    .padStart(2, "0")}`;
-
-  for (const config of Object.values(horarios)) {
-    if (config.dias?.includes(dia)) {
-      const [inicio, fin] = config.horas || [];
-      if (!inicio || !fin || (hora >= inicio && hora <= fin)) {
-        return config.plantilla;
-      }
-    }
-  }
-
-  return horarios.default.plantilla;
-};
-
-PantallasLocal.displayName = "PantallasLocal";
 
 export default PantallasLocal;

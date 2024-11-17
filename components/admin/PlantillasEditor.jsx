@@ -1,6 +1,6 @@
 "use client";
 import { useRouter, useParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import ProductosBuscador from "./ProductosBuscador";
+import ComponenteWrapper from "@/components/screen/ComponenteWrapper";
 
 const PlantillasEditor = ({ isNewPlantilla }) => {
   const router = useRouter();
@@ -41,6 +42,7 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   const [footerComponente, setFooterComponente] = useState("");
   const [configComponentes, setConfigComponentes] = useState({});
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [selectedSpace, setSelectedSpace] = useState(null);
 
   useEffect(() => {
     const initializeData = async () => {
@@ -118,9 +120,40 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   };
 
   const handleConfigChange = (index, field, value) => {
+    if (field === "rowSpan" || field === "colSpan") {
+      // Calcular el nuevo espacio total que ocuparían todos los componentes
+      const nuevoEspacioTotal = Object.entries(configComponentes).reduce(
+        (total, [idx, config]) => {
+          if (parseInt(idx) === index) {
+            // Usar el nuevo valor para el componente que se está modificando
+            const newSpan = field === "rowSpan" ? value : config.rowSpan || 1;
+            const newSpanOther =
+              field === "colSpan" ? value : config.colSpan || 1;
+            return total + newSpan * newSpanOther;
+          }
+          return total + (config.rowSpan || 1) * (config.colSpan || 1);
+        },
+        0
+      );
+
+      // Si excede el espacio disponible, no permitir el cambio
+      if (nuevoEspacioTotal > filas * columnas) {
+        toast({
+          title: "Error",
+          description:
+            "No hay suficiente espacio disponible, elimine un componente o agregue más filas o columnas",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setConfigComponentes((prev) => ({
       ...prev,
-      [index]: { ...prev[index], [field]: value },
+      [index]: {
+        ...prev[index],
+        [field]: value,
+      },
     }));
   };
 
@@ -205,18 +238,19 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         c.attributes.categoria !== "Footer"
     );
 
-    return Array.from({ length: filas }, (_, rowIndex) => (
-      <div key={rowIndex} className="flex gap-2 mb-2">
-        {Array.from({ length: columnas }, (_, colIndex) => {
-          const index = rowIndex * columnas + colIndex + 1;
-          return (
-            <div key={colIndex} className="flex-1 p-4 bg-gray-500/[.06]">
+    return (
+      <div className="grid gap-4">
+        {Array.from({ length: filas * columnas }, (_, index) => (
+          <div key={index} className="p-4 bg-gray-500/[.06] rounded-lg">
+            <div className="flex gap-4 mb-4">
               <Select
-                onValueChange={(value) => handleComponenteChange(index, value)}
-                value={espacios[index] || ""}
+                onValueChange={(value) =>
+                  handleComponenteChange(index + 1, value)
+                }
+                value={espacios[index + 1] || ""}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={`Componente ${index}`} />
+                  <SelectValue placeholder={`Componente ${index + 1}`} />
                 </SelectTrigger>
                 <SelectContent>
                   {componentesOptions.map((componente) => (
@@ -229,31 +263,321 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
                   ))}
                 </SelectContent>
               </Select>
-              {espacios[index] && (
-                <div className="mt-2">
-                  <Label className="block mb-2">Titulo:</Label>
+            </div>
+
+            {espacios[index + 1] && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Filas a ocupar:</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max={filas}
+                      value={configComponentes[index + 1]?.rowSpan || 1}
+                      onChange={(e) =>
+                        handleConfigChange(
+                          index + 1,
+                          "rowSpan",
+                          parseInt(e.target.value) || 1
+                        )
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Columnas a ocupar:</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max={columnas}
+                      value={configComponentes[index + 1]?.colSpan || 1}
+                      onChange={(e) =>
+                        handleConfigChange(
+                          index + 1,
+                          "colSpan",
+                          parseInt(e.target.value) || 1
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Título:</Label>
                   <Input
                     type="text"
-                    value={configComponentes[index]?.titulo || ""}
+                    value={configComponentes[index + 1]?.titulo || ""}
                     onChange={(e) =>
-                      handleConfigChange(index, "titulo", e.target.value)
-                    }
-                    className="border rounded p-2 w-full"
-                  />
-                  <Label className="block mb-2 mt-2">Productos:</Label>
-                  <ProductosBuscador
-                    selectedProducts={configComponentes[index]?.productos || []}
-                    onChange={(productos) =>
-                      handleProductosChange(index, productos)
+                      handleConfigChange(index + 1, "titulo", e.target.value)
                     }
                   />
                 </div>
+                <div>
+                  <Label>Productos:</Label>
+                  <ProductosBuscador
+                    selectedProducts={
+                      configComponentes[index + 1]?.productos || []
+                    }
+                    onChange={(productos) =>
+                      handleConfigChange(index + 1, "productos", productos)
+                    }
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const GridCell = ({
+    index,
+    componente,
+    config,
+    onConfigChange,
+    componentesOptions,
+    isSelected,
+    onSelect,
+  }) => {
+    const espacioNum = index + 1;
+    const productCount = config?.productos?.length || 0;
+
+    return (
+      <div
+        onClick={() => onSelect(espacioNum)}
+        className={`
+          ${componente ? "bg-gray-700/50" : "bg-gray-800/20"} 
+          rounded-lg p-2 flex flex-col items-center justify-center text-sm
+          ${
+            componente
+              ? "border-2 border-blue-500/50"
+              : "border border-gray-700"
+          }
+          ${isSelected ? "ring-2 ring-blue-500" : ""}
+          cursor-pointer hover:bg-gray-600/50 transition-colors
+        `}
+        style={{
+          gridRow: `span ${config?.rowSpan || 1}`,
+          gridColumn: `span ${config?.colSpan || 1}`,
+        }}
+      >
+        {componente ? (
+          <div className="text-center">
+            <div className="font-medium">{componente}</div>
+            <div className="text-xs text-gray-400">
+              {config?.rowSpan || 1}x{config?.colSpan || 1}
+            </div>
+            {productCount > 0 && (
+              <div className="mt-1">
+                <span className="bg-blue-500/20 text-blue-300 text-xs px-2 py-0.5 rounded-full">
+                  {productCount} producto{productCount !== 1 ? "s" : ""}
+                </span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <span className="text-gray-500">Espacio {espacioNum}</span>
+        )}
+      </div>
+    );
+  };
+
+  const renderGridPreview = () => {
+    const componentesOptions = componentes.filter(
+      (c) =>
+        c.attributes.categoria !== "Header" &&
+        c.attributes.categoria !== "Footer"
+    );
+
+    // Crear una matriz para representar el grid
+    const grid = Array(filas)
+      .fill()
+      .map(() => Array(columnas).fill(null));
+
+    // Marcar las celdas ocupadas
+    Object.entries(espacios).forEach(([index, componente]) => {
+      const config = configComponentes[index] || { rowSpan: 1, colSpan: 1 };
+      const row = Math.floor((parseInt(index) - 1) / columnas);
+      const col = (parseInt(index) - 1) % columnas;
+
+      // Verificar si el espacio está dentro de los límites
+      if (row < filas && col < columnas) {
+        // Marcar todas las celdas que ocupa este componente
+        for (let r = 0; r < (config.rowSpan || 1); r++) {
+          for (let c = 0; c < (config.colSpan || 1); c++) {
+            if (row + r < filas && col + c < columnas) {
+              grid[row + r][col + c] = parseInt(index);
+            }
+          }
+        }
+      }
+    });
+
+    // Crear array de espacios disponibles
+    const espaciosDisponibles = [];
+    grid.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        if (cell === null) {
+          const espacioNum = rowIndex * columnas + colIndex + 1;
+          espaciosDisponibles.push(espacioNum);
+        }
+      });
+    });
+
+    return (
+      <div className="space-y-6">
+        <div className="border rounded-lg p-4 bg-gray-900/50">
+          <h3 className="text-lg font-semibold mb-4">Vista Previa del Grid</h3>
+          <div
+            className="grid gap-2 bg-gray-800/50 p-4 rounded-lg"
+            style={{
+              gridTemplateColumns: `repeat(${columnas}, 1fr)`,
+              gridTemplateRows: `repeat(${filas}, 60px)`,
+            }}
+          >
+            {Object.entries(espacios).map(([index, componente]) => {
+              const config = configComponentes[index];
+              return (
+                <GridCell
+                  key={index}
+                  index={parseInt(index) - 1}
+                  componente={componente}
+                  config={config}
+                  onConfigChange={handleConfigChange}
+                  componentesOptions={componentesOptions}
+                  isSelected={selectedSpace === parseInt(index)}
+                  onSelect={setSelectedSpace}
+                />
+              );
+            })}
+            {espaciosDisponibles.map((espacioNum) => (
+              <GridCell
+                key={`empty-${espacioNum}`}
+                index={espacioNum - 1}
+                componente={null}
+                config={null}
+                onConfigChange={handleConfigChange}
+                componentesOptions={componentesOptions}
+                isSelected={selectedSpace === espacioNum}
+                onSelect={setSelectedSpace}
+              />
+            ))}
+          </div>
+        </div>
+
+        {selectedSpace && (
+          <div className="border rounded-lg p-4 bg-gray-900/50">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">
+                Configurar Espacio {selectedSpace}
+              </h3>
+              {espacios[selectedSpace] && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDeleteComponente(selectedSpace)}
+                >
+                  Eliminar Componente
+                </Button>
               )}
             </div>
-          );
-        })}
+            <div className="space-y-4">
+              <div>
+                <Label>Componente</Label>
+                <Select
+                  value={espacios[selectedSpace] || ""}
+                  onValueChange={(value) =>
+                    handleComponenteChange(selectedSpace, value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar componente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {componentesOptions.map((comp) => (
+                      <SelectItem key={comp.id} value={comp.attributes.nombre}>
+                        {comp.attributes.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {espacios[selectedSpace] && (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label>Filas</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max={filas}
+                        value={configComponentes[selectedSpace]?.rowSpan || 1}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 1;
+                          const limitedValue = Math.min(value, filas);
+                          handleConfigChange(
+                            selectedSpace,
+                            "rowSpan",
+                            limitedValue
+                          );
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label>Columnas</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max={columnas}
+                        value={configComponentes[selectedSpace]?.colSpan || 1}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 1;
+                          const limitedValue = Math.min(value, columnas);
+                          handleConfigChange(
+                            selectedSpace,
+                            "colSpan",
+                            limitedValue
+                          );
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Título</Label>
+                    <Input
+                      value={configComponentes[selectedSpace]?.titulo || ""}
+                      onChange={(e) =>
+                        handleConfigChange(
+                          selectedSpace,
+                          "titulo",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Productos</Label>
+                    <ProductosBuscador
+                      selectedProducts={
+                        configComponentes[selectedSpace]?.productos || []
+                      }
+                      onChange={(productos) =>
+                        handleConfigChange(
+                          selectedSpace,
+                          "productos",
+                          productos
+                        )
+                      }
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
-    ));
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -309,6 +633,27 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleDeleteComponente = (index) => {
+    setEspacios((prev) => {
+      const newEspacios = { ...prev };
+      delete newEspacios[index];
+      return newEspacios;
+    });
+
+    setConfigComponentes((prev) => {
+      const newConfig = { ...prev };
+      delete newConfig[index];
+      return newConfig;
+    });
+
+    setSelectedSpace(null);
+
+    toast({
+      title: "Componente eliminado",
+      description: "El componente ha sido eliminado correctamente",
+    });
   };
 
   if (isLoading) return <p>Cargando...</p>;
@@ -401,6 +746,7 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
             <Select
               onValueChange={setHeaderComponente}
               value={headerComponente}
+              required
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar header" />
@@ -425,6 +771,7 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
             <Select
               onValueChange={setFooterComponente}
               value={footerComponente}
+              required
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar footer" />
@@ -476,9 +823,9 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
 
         <Separator className="my-4" />
 
-        <div className="space-y-2">{renderComponenteSelects()}</div>
+        <div>{renderGridPreview()}</div>
 
-        <Button type="submit" variant="secondary" className="mt-4 w-full">
+        <Button type="submit" variant="secondary" className="mt-6 w-full">
           {isNewPlantilla ? "Crear Plantilla" : "Guardar Cambios"}
         </Button>
       </form>
