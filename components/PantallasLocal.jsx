@@ -102,88 +102,120 @@ const PantallasLocal = ({ params }) => {
   };
 
   const { componentes } = plantilla.attributes;
+  const fondoData = plantilla.attributes.fondo?.data?.attributes;
+  const fondoUrl = fondoData
+    ? `${process.env.NEXT_PUBLIC_STRAPI_URL}${fondoData.url}`
+    : null;
+  const isFondoVideo = fondoData?.mime?.startsWith("video/");
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Header */}
-      {componentes.header && (
-        <Suspense
-          fallback={
-            <div className="animate-pulse bg-gray-200 h-16">
-              Cargando header...
-            </div>
-          }
-        >
-          <ComponenteWrapper
-            nombreComponente={componentes.header}
-            cargarComponente={cargarComponente}
-          />
-        </Suspense>
-      )}
-
-      {/* Contenido principal */}
-      <div
-        className="container mx-auto p-4 grid gap-4"
-        style={{
-          gridTemplateColumns: `repeat(${plantilla.attributes.columnas}, 1fr)`,
-          gridTemplateRows: `repeat(${plantilla.attributes.filas}, 1fr)`,
-          height: "calc(100vh - 40em)",
-          minHeight: "calc(100vh - 40em)",
-          maxHeight: "calc(100vh - 40em)",
-        }}
-      >
-        {Object.entries(componentes.espacios).map(([espacio, componente]) => {
-          const config = componentes.config_componentes[espacio];
-          return (
-            <Suspense
-              key={espacio}
-              fallback={
-                <div className="animate-pulse bg-gray-200 rounded-lg p-4">
-                  Cargando...
-                </div>
-              }
-            >
-              <div
-                style={{
-                  gridRow: `span ${config.rowSpan || 1}`,
-                  gridColumn: `span ${config.colSpan || 1}`,
-                }}
-              >
-                <ComponenteWrapper
-                  nombreComponente={componente}
-                  cargarComponente={cargarComponente}
-                  props={{
-                    productos: config.productos,
-                    titulo: config.titulo,
-                    rowSpan: config.rowSpan || 1,
-                    colSpan: config.colSpan || 1,
-                  }}
-                />
-              </div>
-            </Suspense>
-          );
-        })}
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Fondo */}
+      <div className="fixed inset-0 -z-10">
+        {fondoUrl &&
+          (isFondoVideo ? (
+            <video
+              key={fondoUrl}
+              src={fondoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <img
+              src={fondoUrl}
+              alt="Fondo"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ))}
+        <div className="absolute inset-0 bg-black/50" />{" "}
+        {/* Overlay opcional */}
       </div>
 
-      {/* Footer */}
-      <div className="fixed bottom-0 w-full z-10">
-        {componentes.footer && (
+      {/* Contenido */}
+      <div className="relative z-10">
+        {/* Header */}
+        {componentes.header && (
           <Suspense
             fallback={
               <div className="animate-pulse bg-gray-200 h-16">
-                Cargando footer...
+                Cargando header...
               </div>
             }
           >
             <ComponenteWrapper
-              nombreComponente={componentes.footer}
+              nombreComponente={componentes.header}
               cargarComponente={cargarComponente}
-              props={{
-                localId: pantalla?.attributes?.local?.data?.id,
-              }}
             />
           </Suspense>
         )}
+
+        {/* Grid de componentes */}
+        <div
+          className="container mx-auto p-4 grid gap-4"
+          style={{
+            gridTemplateColumns: `repeat(${plantilla.attributes.columnas}, 1fr)`,
+            gridTemplateRows: `repeat(${plantilla.attributes.filas}, 1fr)`,
+            height: "calc(100vh - 40em)",
+            minHeight: "calc(100vh - 40em)",
+            maxHeight: "calc(100vh - 40em)",
+          }}
+        >
+          {Object.entries(componentes.espacios).map(([espacio, componente]) => {
+            const config = componentes.config_componentes[espacio];
+            return (
+              <Suspense
+                key={espacio}
+                fallback={
+                  <div className="animate-pulse bg-gray-200 rounded-lg p-4">
+                    Cargando...
+                  </div>
+                }
+              >
+                <div
+                  style={{
+                    gridRow: `span ${config.rowSpan || 1}`,
+                    gridColumn: `span ${config.colSpan || 1}`,
+                  }}
+                >
+                  <ComponenteWrapper
+                    nombreComponente={componente}
+                    cargarComponente={cargarComponente}
+                    props={{
+                      productos: config.productos,
+                      titulo: config.titulo,
+                      rowSpan: config.rowSpan || 1,
+                      colSpan: config.colSpan || 1,
+                    }}
+                  />
+                </div>
+              </Suspense>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="fixed bottom-0 w-full z-10">
+          {componentes.footer && (
+            <Suspense
+              fallback={
+                <div className="animate-pulse bg-gray-200 h-16">
+                  Cargando footer...
+                </div>
+              }
+            >
+              <ComponenteWrapper
+                nombreComponente={componentes.footer}
+                cargarComponente={cargarComponente}
+                props={{
+                  localId: pantalla?.attributes?.local?.data?.id,
+                }}
+              />
+            </Suspense>
+          )}
+        </div>
       </div>
     </div>
   );

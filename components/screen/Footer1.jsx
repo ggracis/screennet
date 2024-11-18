@@ -69,7 +69,7 @@ const Footer1 = () => {
   }
 
   return (
-    <footer className="h-10 p-2 bg-gray-800 flex items-center justify-center">
+    <footer className="h-7 p-2 bg-gray-800/80 flex items-center justify-center">
       <p className="text-sm text-center text-white">
         {local?.attributes?.opciones?.direccion}
       </p>

@@ -35,7 +35,7 @@ const Componente2 = memo(({ productos, titulo, rowSpan = 1 }) => {
                 .map(([titulo, precio]) => (
                   <div
                     key={`${product.id}-${titulo}`}
-                    className="px-2 py-1 bg-gray-700/50 rounded-md"
+                    className="p-1 bg-gray-700/50 rounded-md"
                   >
                     <span className="text-gray-300">{titulo}: </span>
                     <span className="text-xl font-bold text-white">

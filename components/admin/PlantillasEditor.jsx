@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import ProductosBuscador from "./ProductosBuscador";
-import ComponenteWrapper from "@/components/screen/ComponenteWrapper";
+
+import { Card, CardContent } from "@/components/ui/card";
 
 const PlantillasEditor = ({ isNewPlantilla }) => {
   const router = useRouter();
@@ -43,6 +44,8 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   const [configComponentes, setConfigComponentes] = useState({});
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedSpace, setSelectedSpace] = useState(null);
+  const [previewType, setPreviewType] = useState("image");
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     const initializeData = async () => {
@@ -55,6 +58,14 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
     };
     initializeData();
   }, [isNewPlantilla]);
+
+  useEffect(() => {
+    if (plantilla && typeof plantilla.fondo === "string") {
+      setSelectedImage(plantilla.fondo);
+      const isVideo = /(\.mp4|\.mov|\.avi)$/i.test(plantilla.fondo);
+      setPreviewType(isVideo ? "video" : "image");
+    }
+  }, [plantilla]);
 
   const fetchPlantilla = async () => {
     try {
@@ -70,8 +81,25 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         setDescripcion(plantillaData.descripcion);
         setColumnas(plantillaData.columnas);
         setFilas(plantillaData.filas);
-        setImagen(plantillaData.imagen?.data?.attributes?.url || "");
-        setFondo(plantillaData.fondo?.data?.attributes?.url || "");
+
+        // Manejar imagen
+        const imagenUrl = plantillaData.imagen?.data?.attributes?.url;
+        if (imagenUrl) {
+          setImagen(`${process.env.NEXT_PUBLIC_STRAPI_URL}${imagenUrl}`);
+        }
+
+        // Manejar fondo y establecer tipo
+        const fondoData = plantillaData.fondo?.data?.attributes;
+        if (fondoData) {
+          const fondoUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${fondoData.url}`;
+          setFondo(fondoUrl);
+          setSelectedImage(fondoUrl);
+          // Determinar tipo basado en el MIME type
+          setPreviewType(
+            fondoData.mime.startsWith("video/") ? "video" : "image"
+          );
+        }
+
         setEspacios(plantillaData.componentes?.espacios || {});
         setHeaderComponente(plantillaData.componentes?.header || "");
         setFooterComponente(plantillaData.componentes?.footer || "");
@@ -164,70 +192,51 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
     }));
   };
 
-  const handleFileChange = async (e, type) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
+    const MAX_SIZE_MB = 20;
+    const MAX_SIZE = MAX_SIZE_MB * 1024 * 1024;
+
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        return handleError("El archivo no debe superar los 5MB");
-      }
-      const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-      ];
-      if (!allowedTypes.includes(file.type)) {
-        return handleError(
-          "Solo se permiten archivos de imagen (JPEG, PNG, GIF, WEBP)"
-        );
+      if (file.size > MAX_SIZE) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `El archivo no debe superar los ${MAX_SIZE_MB}MB`,
+        });
+        return;
       }
 
-      if (type === "imagen") {
-        setImagenFile(file);
-        setImagenPreview(URL.createObjectURL(file));
-      } else {
-        setFondoFile(file);
-        setFondoPreview(URL.createObjectURL(file));
+      // Determinar el tipo de archivo
+      const isVideo = file.type.startsWith("video/");
+      setPreviewType(isVideo ? "video" : "image");
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) throw new Error("Error al subir el archivo");
+
+        const data = await response.json();
+        setSelectedImage(data.url);
+
+        // Actualizar el estado de la plantilla
+        setPlantilla((prev) => ({
+          ...prev,
+          fondo: data.url,
+        }));
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Error al subir el archivo",
+        });
       }
-
-      // Subir el archivo inmediatamente
-      await uploadFile(file, type);
-    }
-  };
-
-  const uploadFile = async (file, type) => {
-    const formData = new FormData();
-    formData.append("files", file);
-    formData.append("ref", "api::plantilla.plantilla");
-    formData.append("refId", id);
-    formData.append("field", type === "imagen" ? "imagen" : "fondo");
-
-    try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error al subir el ${type}`);
-      }
-
-      const result = await response.json();
-      console.log(`${type} subido:`, result);
-
-      // Actualizar el estado local con la nueva URL del archivo
-      if (type === "imagen") {
-        setImagen(result[0].url);
-      } else {
-        setFondo(result[0].url);
-      }
-
-      toast({
-        title: "Éxito",
-        description: `${type} actualizado correctamente`,
-      });
-    } catch (error) {
-      handleError(`Error al subir el ${type}`, error);
     }
   };
 
@@ -698,10 +707,10 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
             )}
             {imagen && !imagenPreview && (
               <Image
-                src={`${process.env.NEXT_PUBLIC_STRAPI_URL}/${imagen}`}
+                src={imagen}
                 alt="Imagen"
-                width={100}
-                height={100}
+                width={720}
+                height={480}
                 className="mt-2"
               />
             )}
@@ -709,34 +718,44 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
               type="file"
               onChange={(e) => handleFileChange(e, "imagen")}
               accept="image/*"
+              className="mt-2 w-full bg-gray-900/50"
             />
           </div>
 
           <div className="w-1/2">
             <Label className="block mb-2">Fondo:</Label>
-            {fondoPreview && (
-              <Image
-                src={fondoPreview}
-                alt="Fondo Preview"
-                width={100}
-                height={100}
-                className="mt-2"
+            <Card className="mb-4">
+              <CardContent className="relative w-full h-[300px] p-0 overflow-hidden">
+                {previewType === "image" ? (
+                  <img
+                    src={selectedImage || "/placeholder-image.jpg"}
+                    alt="Vista previa"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <video
+                    key={selectedImage}
+                    src={selectedImage}
+                    autoPlay
+                    loop
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </CardContent>
+            </Card>
+            <div className="grid w-full  items-center gap-1.5">
+              <Input
+                id="fondo"
+                type="file"
+                accept="image/jpeg,image/png,image/gif,video/mp4,video/quicktime,video/x-msvideo"
+                onChange={handleFileChange}
+                className="mt-2 w-full bg-gray-900/50"
               />
-            )}
-            {fondo && !fondoPreview && (
-              <Image
-                src={`${process.env.NEXT_PUBLIC_STRAPI_URL}/${fondo}`}
-                alt="Fondo"
-                width={100}
-                height={100}
-                className="mt-2"
-              />
-            )}
-            <Input
-              type="file"
-              onChange={(e) => handleFileChange(e, "fondo")}
-              accept="image/*"
-            />
+              <p className="text-sm text-muted-foreground">
+                Sube una imagen o video (máx. 20MB)
+              </p>
+            </div>
           </div>
         </div>
 

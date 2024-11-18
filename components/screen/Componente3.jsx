@@ -4,7 +4,7 @@ import { ProductCard } from "./ProductCard";
 
 const Componente3 = memo(({ productos, titulo, rowSpan = 1 }) => {
   const { loading, error, products } = useProducts(productos);
-  const baseItemsPerPage = 6;
+  const baseItemsPerPage = 5;
   const adjustedItemsPerPage = baseItemsPerPage * rowSpan;
 
   const displayProducts = useMemo(
@@ -35,7 +35,7 @@ const Componente3 = memo(({ productos, titulo, rowSpan = 1 }) => {
                 .map(([titulo, precio]) => (
                   <div
                     key={`${product.id}-${titulo}`}
-                    className="px-2 py-1 bg-gray-700/50 rounded-md"
+                    className="p-1 bg-gray-700/50 rounded-md"
                   >
                     <span className="text-gray-300">{titulo}: </span>
                     <span className="text-md text-white">${precio}</span>

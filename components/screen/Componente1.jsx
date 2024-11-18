@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 
 const Componente1 = memo(({ productos, titulo, rowSpan = 1 }) => {
   const { loading, error, products } = useProducts(productos);
-  const baseItemsPerPage = 7;
+  const baseItemsPerPage = 6;
   const adjustedItemsPerPage = baseItemsPerPage * rowSpan;
 
   const displayProducts = useMemo(

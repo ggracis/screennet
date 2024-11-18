@@ -154,17 +154,17 @@ export function GradientPicker({ background, setBackground, className }) {
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64">
+      <PopoverContent className="w-72">
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="w-full mb-4">
             <TabsTrigger className="flex-1" value="solid">
-              Solid
+              Solidos
             </TabsTrigger>
             <TabsTrigger className="flex-1" value="gradient">
-              Gradient
+              Gradientes
             </TabsTrigger>
             <TabsTrigger className="flex-1" value="image">
-              Image
+              Imagenes
             </TabsTrigger>
           </TabsList>
           <TabsContent value="solid" className="flex flex-wrap gap-1 mt-0">

@@ -72,7 +72,7 @@ const Header = () => {
   return (
     <header
       style={{ background: local?.attributes?.opciones?.Encabezado }}
-      className="h-20 px-10 py-2 grid grid-cols-[200px_1fr_200px] items-center"
+      className="h-18 px-10 py-2 grid grid-cols-[200px_1fr_200px] items-center"
     >
       {/* Logo - ancho fijo izquierda */}
       <div className="w-[200px]">
