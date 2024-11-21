@@ -8,6 +8,7 @@ import useAuthStore from "@/stores/useAuthStore";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { InstagramEmbed } from "react-social-media-embed";
+import InstagramFeed from "@/components/screen/InstagramFeed";
 
 export function LocalEditor() {
   const [localData, setLocalData] = useState(null);
