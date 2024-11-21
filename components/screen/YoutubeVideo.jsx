@@ -15,7 +15,7 @@ const YoutubeVideo = ({ videoUrl }) => {
   useEffect(() => {
     if (iframeRef.current && videoId) {
       const iframe = iframeRef.current;
-      iframe.src = `https://www.youtube.com/embed/${JX6r68ioC7M}?autoplay=1`; // El ?autoplay=1 asegura que el video se reproduzca automáticamente
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`; // El ?autoplay=1 asegura que el video se reproduzca automáticamente
     }
   }, [videoUrl]);
 
