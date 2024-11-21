@@ -5,21 +5,20 @@ export async function POST(request) {
   const formData = await request.formData();
 
   try {
-    const headersList = headers();
-    const token = headersList.get("Authorization");
-
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/upload`,
       {
         method: "POST",
         headers: {
-          Authorization: token,
+          Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
         },
         body: formData,
       }
     );
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Error response from Strapi:", errorText);
       throw new Error(
         `Error al subir archivo: ${response.status} ${response.statusText}`
       );
@@ -28,7 +27,7 @@ export async function POST(request) {
     const result = await response.json();
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error en la carga del archivo:", error);
+    console.error("Error detallado en la carga del archivo:", error);
     return NextResponse.json(
       { error: "Error interno del servidor", details: error.message },
       { status: 500 }

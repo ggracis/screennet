@@ -2,21 +2,33 @@ import { create } from "zustand";
 
 const obtenerPlantillaSegunHorario = (horarios) => {
   const ahora = new Date();
-  const dia = ["0", "1", "l", "m", "x", "j", "v"][ahora.getDay()];
+  const dia = ahora.getDay().toString();
   const hora = `${ahora.getHours().toString().padStart(2, "0")}:${ahora
     .getMinutes()
     .toString()
     .padStart(2, "0")}`;
 
-  for (const config of Object.values(horarios)) {
+  /* console.log("Hora actual:", hora);
+  console.log("Día actual:", dia);
+  console.log("Horarios configurados:", JSON.stringify(horarios, null, 2)); */
+
+  for (const [key, config] of Object.entries(horarios)) {
+    if (key === "default") continue;
+
     if (config.dias?.includes(dia)) {
       const [inicio, fin] = config.horas || [];
-      if (!inicio || !fin || (hora >= inicio && hora <= fin)) {
+      // console.log(`Verificando horario ${key}:`, inicio, fin);
+
+      if (inicio && fin && hora >= inicio && hora <= fin) {
+        /*  console.log(
+          `Horario encontrado: ${key}, plantilla: ${config.plantilla}`
+        ); */
         return config.plantilla;
       }
     }
   }
 
+  //console.log("Usando plantilla por defecto:", horarios.default.plantilla);
   return horarios.default.plantilla;
 };
 
@@ -27,6 +39,7 @@ const useScreenStore = create((set, get) => ({
   loading: false,
   error: null,
   pollingInterval: null,
+  lastCheckedHorario: null,
 
   fetchScreenData: async (pantallaId) => {
     try {
@@ -65,18 +78,49 @@ const useScreenStore = create((set, get) => ({
     }
   },
 
-  initializePolling: (pantallaId) => {
-    const polling = setInterval(() => {
-      get().fetchScreenData(pantallaId);
-    }, 10 * 60 * 1000); // 10 minutos
+  checkHorarioAndUpdate: async () => {
+    const { pantalla } = get();
+    if (!pantalla) return;
 
-    set({ pollingInterval: polling });
+    const nuevoPlantillaId = obtenerPlantillaSegunHorario(
+      pantalla.attributes.plantilla_horario
+    );
+
+    // Si la plantilla actual es diferente a la que corresponde según el horario
+    if (get().plantilla?.id !== nuevoPlantillaId) {
+      //console.log("Cambiando a plantilla:", nuevoPlantillaId);
+      const plantillaResponse = await fetch(
+        `/api/plantillas/${nuevoPlantillaId}?timestamp=${Date.now()}`
+      );
+      const { plantilla } = await plantillaResponse.json();
+      set({ plantilla });
+    }
+  },
+
+  initializePolling: (pantallaId) => {
+    // Polling principal cada 10 minutos
+    const mainPolling = setInterval(() => {
+      get().fetchScreenData(pantallaId);
+    }, 10 * 60 * 1000);
+
+    // Verificación de horario cada minuto
+    const horarioPolling = setInterval(() => {
+      get().checkHorarioAndUpdate();
+    }, 60 * 1000); // cada minuto
+
+    set({
+      pollingInterval: {
+        main: mainPolling,
+        horario: horarioPolling,
+      },
+    });
   },
 
   cleanup: () => {
     const { pollingInterval } = get();
     if (pollingInterval) {
-      clearInterval(pollingInterval);
+      clearInterval(pollingInterval.main);
+      clearInterval(pollingInterval.horario);
       set({ pollingInterval: null });
     }
   },

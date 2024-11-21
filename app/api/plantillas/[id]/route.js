@@ -41,55 +41,51 @@ export async function PUT(request, { params }) {
   const body = await request.json();
 
   try {
-    const headers = {
-      Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
-      "Content-Type": "application/json",
-    };
+    console.log(
+      "1. Datos originales recibidos:",
+      JSON.stringify(body, null, 2)
+    );
 
-    console.log(`Actualizando datos de la plantilla ${id}`);
-    console.log("Datos recibidos:", JSON.stringify(body, null, 2));
-
-    const { nombre, descripcion, columnas, filas, componentes } =
-      body.data || {};
-
-    const updateData = {
-      data: {
-        nombre,
-        descripcion,
-        columnas,
-        filas,
-        componentes,
-      },
-    };
+    if (body.data.fondo?.id) {
+      body.data.fondo = {
+        set: [body.data.fondo.id],
+      };
+    }
 
     console.log(
-      "Datos enviados a Strapi:",
-      JSON.stringify(updateData, null, 2)
+      "3. Datos transformados a enviar a Strapi:",
+      JSON.stringify(body, null, 2)
     );
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/plantillas/${id}`,
       {
         method: "PUT",
-        headers,
-        body: JSON.stringify(updateData),
+        headers: {
+          Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
       }
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Error response from Strapi:", errorText);
+      console.error("4. Error response from Strapi:", errorText);
       throw new Error(
-        `Error al actualizar datos: ${response.status} ${response.statusText} - ${errorText}`
+        `Error al actualizar datos: ${response.status} ${response.statusText}`
       );
     }
 
     const updatedData = await response.json();
-    console.log(`Respuesta de Strapi:`, JSON.stringify(updatedData, null, 2));
+    console.log(
+      "5. Respuesta exitosa de Strapi:",
+      JSON.stringify(updatedData, null, 2)
+    );
 
     return NextResponse.json(updatedData);
   } catch (error) {
-    console.error("Error detallado en la actualización de datos:", error);
+    console.error("6. Error detallado:", error);
     return NextResponse.json(
       { error: "Error interno del servidor", details: error.message },
       { status: 500 }

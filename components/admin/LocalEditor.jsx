@@ -7,6 +7,7 @@ import { GradientPicker } from "@/components/ui/GradientPicker";
 import useAuthStore from "@/stores/useAuthStore";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
+import { InstagramEmbed } from "react-social-media-embed";
 
 export function LocalEditor() {
   const [localData, setLocalData] = useState(null);
@@ -277,6 +278,16 @@ export function LocalEditor() {
         )}
 
         <Input type="file" onChange={handleLogoChange} accept="image/*" />
+      </div>
+
+      <div className="mt-6">
+        <h3 className="text-xl font-semibold mb-4">Instagram Feed</h3>
+        <InstagramFeed
+          username={localData.attributes?.opciones?.redes?.instagram?.replace(
+            "@",
+            ""
+          )}
+        />
       </div>
 
       <Button className="w-full" size="lg" onClick={handleSubmit}>

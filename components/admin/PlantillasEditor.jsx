@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import ProductosBuscador from "./ProductosBuscador";
 
 import { Card, CardContent } from "@/components/ui/card";
+import FondosSelector from "./FondosSelector";
 
 const PlantillasEditor = ({ isNewPlantilla }) => {
   const router = useRouter();
@@ -192,7 +193,7 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
     }));
   };
 
-  const handleFileChange = async (e) => {
+  const handleFileChange = async (e, tipo = "fondo") => {
     const file = e.target.files[0];
     const MAX_SIZE_MB = 20;
     const MAX_SIZE = MAX_SIZE_MB * 1024 * 1024;
@@ -207,30 +208,52 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         return;
       }
 
-      // Determinar el tipo de archivo
-      const isVideo = file.type.startsWith("video/");
-      setPreviewType(isVideo ? "video" : "image");
-
       try {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("files", file);
+        formData.append("ref", "api::plantilla.plantilla");
+        formData.append("refId", id);
+        formData.append("field", tipo);
 
         const response = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         });
 
-        if (!response.ok) throw new Error("Error al subir el archivo");
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Error response:", errorText);
+          throw new Error(`Error al subir el archivo: ${response.status}`);
+        }
 
-        const data = await response.json();
-        setSelectedImage(data.url);
+        const result = await response.json();
+        console.log("Archivo subido:", result);
+
+        const fileUrl = result[0].url;
+        const fullUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${fileUrl}`;
+
+        if (tipo === "imagen") {
+          setImagenPreview(fullUrl);
+        } else {
+          setSelectedImage(fullUrl);
+          setPreviewType(file.type.startsWith("video/") ? "video" : "image");
+        }
 
         // Actualizar el estado de la plantilla
         setPlantilla((prev) => ({
           ...prev,
-          fondo: data.url,
+          [tipo]: {
+            data: {
+              id: result[0].id,
+              attributes: {
+                url: fileUrl,
+                mime: file.type,
+              },
+            },
+          },
         }));
       } catch (error) {
+        console.error("Error detallado:", error);
         toast({
           variant: "destructive",
           title: "Error",
@@ -238,6 +261,28 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         });
       }
     }
+  };
+
+  const handleFondoSelect = (fondo) => {
+    console.log("Fondo seleccionado:", fondo);
+
+    const fullUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${fondo.url}`;
+    setSelectedImage(fullUrl);
+    setPreviewType(fondo.mime.startsWith("video/") ? "video" : "image");
+
+    // Actualizar el estado completo de la plantilla
+    setPlantilla((prev) => ({
+      ...prev,
+      fondo: {
+        data: {
+          id: fondo.id,
+          attributes: {
+            url: fondo.url,
+            mime: fondo.mime,
+          },
+        },
+      },
+    }));
   };
 
   const renderComponenteSelects = () => {
@@ -606,7 +651,15 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
       },
     };
 
+    // Modificar cómo se agrega el fondo
+    if (plantilla?.fondo?.data?.id) {
+      plantillaData.data.fondo = {
+        id: plantilla.fondo.data.id,
+      };
+    }
+
     try {
+      console.log("Datos a enviar:", JSON.stringify(plantillaData, null, 2));
       const url = isNewPlantilla ? "/api/plantillas" : `/api/plantillas/${id}`;
       const method = isNewPlantilla ? "POST" : "PUT";
 
@@ -744,16 +797,23 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
                 )}
               </CardContent>
             </Card>
-            <div className="grid w-full  items-center gap-1.5">
-              <Input
-                id="fondo"
-                type="file"
-                accept="image/jpeg,image/png,image/gif,video/mp4,video/quicktime,video/x-msvideo"
-                onChange={handleFileChange}
-                className="mt-2 w-full bg-gray-900/50"
-              />
+            <div className="grid w-full items-center gap-1.5">
+              <div className="flex gap-2">
+                <Input
+                  id="fondo"
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,video/mp4,video/quicktime,video/x-msvideo"
+                  onChange={handleFileChange}
+                  className="mt-2 w-full bg-gray-900/50"
+                />
+                <FondosSelector
+                  onSelect={handleFondoSelect}
+                  selectedFondo={selectedImage}
+                />
+              </div>
               <p className="text-sm text-muted-foreground">
-                Sube una imagen o video (máx. 20MB)
+                Sube una imagen o video (máx. 20MB) o selecciona uno de la
+                biblioteca
               </p>
             </div>
           </div>
