@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import useProductStore from "@/stores/useProductStore";
 import useScreenStore from "@/stores/useScreenStore";
 
-const PantallasLocal = ({ params }) => {
+const PantallasLocal = ({ pantallaId }) => {
   const {
     initializePolling: initProductPolling,
     cleanup: cleanupProducts,
@@ -27,15 +27,15 @@ const PantallasLocal = ({ params }) => {
   useEffect(() => {
     fetchAllProducts();
     initProductPolling();
-    fetchScreenData(params.id);
-    initScreenPolling(params.id);
+    fetchScreenData(pantallaId);
+    initScreenPolling(pantallaId);
 
     return () => {
       cleanupProducts();
       cleanupScreen();
     };
   }, [
-    params.id,
+    pantallaId,
     initProductPolling,
     fetchScreenData,
     initScreenPolling,

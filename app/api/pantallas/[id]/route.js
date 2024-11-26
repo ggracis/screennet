@@ -1,6 +1,20 @@
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
+  console.log("Params recibidos:", params);
+  console.log("ID de pantalla:", params.id);
+  console.log("STRAPI_API_URL:", process.env.STRAPI_API_URL);
+
+  if (!params.id) {
+    return new Response(
+      JSON.stringify({ error: "ID de pantalla no proporcionado" }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+
   const { id } = params;
   const timestamp = Date.now();
 
@@ -13,7 +27,7 @@ export async function GET(request, { params }) {
     console.log(`Obteniendo datos de la pantalla ${id}`);
 
     const pantallaResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/pantallas/${id}?timestamp=${timestamp}&populate=*`,
+      `${process.env.STRAPI_API_URL}/pantallas/${id}?timestamp=${timestamp}&populate=*`,
       { headers }
     );
 
