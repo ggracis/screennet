@@ -13,10 +13,12 @@ const useAuthStore = create(
       login: async (identifier, password) => {
         set({ loading: true, error: null });
         try {
-          const response = await axios.post(
-            "https://screen.net.ar/strapi/api/auth/local",
-            { identifier, password }
-          );
+          const STRAPI_URL =
+            process.env.NEXTAUTH_URL || "https://screen.net.ar/strapi";
+          const response = await axios.post(`${STRAPI_URL}/api/auth/local`, {
+            identifier,
+            password,
+          });
           localStorage.setItem("token", response.data.jwt);
           axios.defaults.headers.common[
             "Authorization"
@@ -48,9 +50,10 @@ const useAuthStore = create(
         if (token) {
           axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
           try {
-            const response = await axios.get(
-              "https://screen.net.ar/strapi/api/users/me"
-            );
+            const STRAPI_URL =
+              process.env.NEXT_PUBLIC_STRAPI_URL ||
+              "https://screen.net.ar/strapi";
+            const response = await axios.get(`${STRAPI_URL}/api/users/me`);
             set({
               user: response.data,
               userId: response.data.id,

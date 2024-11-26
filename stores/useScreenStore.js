@@ -45,25 +45,33 @@ const useScreenStore = create((set, get) => ({
     try {
       set({ loading: true });
 
+      const baseUrl = process.env.NEXTAUTH_URL || "";
+
       const pantallaRes = await fetch(
-        `/api/pantallas/${pantallaId}?timestamp=${Date.now()}`
+        `${baseUrl}/api/pantallas/${pantallaId}?timestamp=${Date.now()}`
       );
 
       if (!pantallaRes.ok) {
-        throw new Error("Error al obtener datos de pantalla");
+        throw new Error(
+          `Error al obtener datos de pantalla: ${pantallaRes.status}`
+        );
       }
 
       const { pantalla } = await pantallaRes.json();
-
-      // Obtener el ID de la plantilla actual según el horario
       const plantillaId = obtenerPlantillaSegunHorario(
         pantalla.attributes.plantilla_horario
       );
 
-      // Obtener datos de la plantilla
       const plantillaResponse = await fetch(
-        `/api/plantillas/${plantillaId}?timestamp=${Date.now()}`
+        `${baseUrl}/api/plantillas/${plantillaId}?timestamp=${Date.now()}`
       );
+
+      if (!plantillaResponse.ok) {
+        throw new Error(
+          `Error al obtener plantilla: ${plantillaResponse.status}`
+        );
+      }
+
       const { plantilla } = await plantillaResponse.json();
 
       set({
@@ -82,15 +90,14 @@ const useScreenStore = create((set, get) => ({
     const { pantalla } = get();
     if (!pantalla) return;
 
+    const baseUrl = process.env.NEXTAUTH_URL || "";
     const nuevoPlantillaId = obtenerPlantillaSegunHorario(
       pantalla.attributes.plantilla_horario
     );
 
-    // Si la plantilla actual es diferente a la que corresponde según el horario
     if (get().plantilla?.id !== nuevoPlantillaId) {
-      //console.log("Cambiando a plantilla:", nuevoPlantillaId);
       const plantillaResponse = await fetch(
-        `/api/plantillas/${nuevoPlantillaId}?timestamp=${Date.now()}`
+        `${baseUrl}/api/plantillas/${nuevoPlantillaId}?timestamp=${Date.now()}`
       );
       const { plantilla } = await plantillaResponse.json();
       set({ plantilla });

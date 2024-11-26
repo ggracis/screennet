@@ -17,10 +17,11 @@ const useProductStore = create(
           let allProducts = [];
           let page = 1;
           const pageSize = 100;
+          const baseUrl = process.env.NEXTAUTH_URL || "";
 
           while (true) {
             const response = await fetch(
-              `/api/productos?page=${page}&pageSize=${pageSize}&populate=*`
+              `${baseUrl}/api/productos?page=${page}&pageSize=${pageSize}&populate=*`
             );
 
             if (!response.ok) throw new Error("Error fetching products");
@@ -59,8 +60,11 @@ const useProductStore = create(
         if (typeof window !== "undefined") {
           const interval = setInterval(async () => {
             try {
+              const baseUrl = process.env.NEXTAUTH_URL || "";
               const response = await fetch(
-                `/api/productos/actualizados?lastUpdate=${get().lastUpdate}`
+                `${baseUrl}/api/productos/actualizados?lastUpdate=${
+                  get().lastUpdate
+                }`
               );
               if (!response.ok) throw new Error("Error fetching updates");
               const { data } = await response.json();
