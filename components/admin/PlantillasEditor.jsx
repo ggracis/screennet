@@ -68,6 +68,12 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
     }
   }, [plantilla]);
 
+  useEffect(() => {
+    if (id) {
+      fetchComponentes();
+    }
+  }, [id]);
+
   const fetchPlantilla = async () => {
     try {
       const response = await fetch(`/api/plantillas/${id}`);
@@ -122,12 +128,13 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
 
   const fetchComponentes = async () => {
     try {
-      const response = await fetch("/api/componentes");
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/componentes?t=${timestamp}`);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error("Error al obtener componentes");
       }
       const data = await response.json();
-      setComponentes(data.data);
+      setComponentes(data.data || []);
     } catch (error) {
       console.error("Error fetching componentes:", error);
       toast({
@@ -597,39 +604,67 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
                       />
                     </div>
                   </div>
-                  <div>
-                    <Label>Título</Label>
-                    <Input
-                      value={configComponentes[selectedSpace]?.titulo || ""}
-                      onChange={(e) =>
-                        handleConfigChange(
-                          selectedSpace,
-                          "titulo",
-                          e.target.value
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Productos</Label>
-                    <ProductosBuscador
-                      selectedProducts={
-                        configComponentes[selectedSpace]?.productos || []
-                      }
-                      onChange={(productos) =>
-                        handleConfigChange(
-                          selectedSpace,
-                          "productos",
-                          productos
-                        )
-                      }
-                    />
-                  </div>
+                  {renderComponenteConfig(
+                    selectedSpace,
+                    espacios[selectedSpace]
+                  )}
                 </>
               )}
             </div>
           </div>
         )}
+      </div>
+    );
+  };
+
+  const renderComponenteConfig = (index, componente) => {
+    // Buscar la configuración del componente en la lista de componentes
+    const componenteInfo = componentes.find(
+      (c) => c.attributes.nombre === componente
+    );
+
+    if (!componenteInfo) return null;
+
+    // Si es un componente personalizado
+    if (componenteInfo.attributes.categoria === "Personalizado") {
+      const config = componenteInfo.attributes.configuracion;
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label>{config.titulo}</Label>
+            <Input
+              type="text"
+              value={configComponentes[index]?.data || ""}
+              onChange={(e) =>
+                handleConfigChange(index, "data", e.target.value)
+              }
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // Si es un componente regular, mostrar los campos estándar
+    return (
+      <div className="space-y-4">
+        <div>
+          <Label>Título</Label>
+          <Input
+            value={configComponentes[index]?.titulo || ""}
+            onChange={(e) =>
+              handleConfigChange(index, "titulo", e.target.value)
+            }
+          />
+        </div>
+        <div>
+          <Label>Productos</Label>
+          <ProductosBuscador
+            selectedProducts={configComponentes[index]?.productos || []}
+            onChange={(productos) =>
+              handleConfigChange(index, "productos", productos)
+            }
+          />
+        </div>
       </div>
     );
   };

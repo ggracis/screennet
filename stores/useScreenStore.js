@@ -98,10 +98,9 @@ const useScreenStore = create((set, get) => ({
   },
 
   initializePolling: (pantallaId) => {
-    // Polling principal cada 10 minutos
     const mainPolling = setInterval(() => {
       get().fetchScreenData(pantallaId);
-    }, 10 * 60 * 1000);
+    }, 10 * 60 * 1000); // cada 10 minutos
 
     // Verificación de horario cada minuto
     const horarioPolling = setInterval(() => {

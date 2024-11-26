@@ -135,7 +135,7 @@ const PantallasLocal = ({ params }) => {
       </div>
 
       {/* Contenido */}
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col justify-center min-h-screen">
         {/* Header */}
         {componentes.header && (
           <Suspense
@@ -158,9 +158,11 @@ const PantallasLocal = ({ params }) => {
           style={{
             gridTemplateColumns: `repeat(${plantilla.attributes.columnas}, 1fr)`,
             gridTemplateRows: `repeat(${plantilla.attributes.filas}, 1fr)`,
-            height: "calc(100vh - 40em)",
-            minHeight: "calc(100vh - 40em)",
-            maxHeight: "calc(100vh - 40em)",
+            height:
+              plantilla.attributes.filas === 1
+                ? "calc(100vh - 12rem)"
+                : "calc(100vh - 40em)",
+            minHeight: "50vh",
           }}
         >
           {Object.entries(componentes.espacios).map(([espacio, componente]) => {
@@ -184,10 +186,8 @@ const PantallasLocal = ({ params }) => {
                     nombreComponente={componente}
                     cargarComponente={cargarComponente}
                     props={{
-                      productos: config.productos,
-                      titulo: config.titulo,
-                      rowSpan: config.rowSpan || 1,
-                      colSpan: config.colSpan || 1,
+                      ...config,
+                      data: config.data || config.titulo,
                     }}
                   />
                 </div>
