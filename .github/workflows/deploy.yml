@@ -15,6 +15,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Debug Secrets
+        run: |
+          echo "Host: ${{ secrets.EC2_HOST }}"
+          echo "Username: ${{ secrets.EC2_USERNAME }}"
+          echo "Key Length: ${# secrets.EC2_SSH_KEY }"
+          echo "Public Key (anónimo):"
+          echo "${{ secrets.EC2_SSH_KEY }}" | cut -c1-20
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
@@ -22,16 +30,13 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            set -e  # Detener el script si hay algún error
-
             cd ~/screennet
 
             # Guardar el hash del último commit
             LAST_COMMIT=$(git rev-parse HEAD)
 
-            # Actualizar el repositorio
-            echo "Actualizando el repositorio..."
-            git pull origin master || { echo "Error al hacer git pull"; exit 1; }
+            # Actualizar código
+            git pull origin master
 
             # Si no hay cambios, salir
             if [ "$LAST_COMMIT" = "$(git rev-parse HEAD)" ]; then
@@ -39,21 +44,12 @@ jobs:
               exit 0
             fi
 
-            # Instalar dependencias solo si cambió package.json o package-lock.json
-            if git diff --name-only $LAST_COMMIT HEAD | grep -Eq "package.json|package-lock.json"; then
+            # Instalar solo si hay cambios en package.json
+            if git diff --name-only $LAST_COMMIT HEAD | grep -q "package.json"; then
               echo "Cambios detectados en package.json, instalando dependencias..."
-              npm ci --production || { echo "Error al instalar dependencias"; exit 1; }
-            else
-              echo "No hay cambios en dependencias."
+              npm ci --production
             fi
 
-            # Construir solo si hay cambios en archivos críticos
-            if git diff --name-only $LAST_COMMIT HEAD | grep -Eq "next.config.js|src/|pages/|components/"; then
-              echo "Cambios detectados en el código fuente, construyendo la aplicación..."
-              npm run build || { echo "Error en la construcción"; exit 1; }
-            else
-              echo "No hay cambios en el código fuente."
-            fi
-
-            # Reiniciar PM2 y actualizar el entorno
-            pm2 restart screennet --update-env || { echo "Error al reiniciar PM2"; exit 1; }
+            # Construir y reiniciar
+            npm run build
+            pm2 restart screennet --update-env
