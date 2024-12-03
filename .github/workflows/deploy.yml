@@ -19,7 +19,7 @@ jobs:
         run: |
           echo "Host: ${{ secrets.EC2_HOST }}"
           echo "Username: ${{ secrets.EC2_USERNAME }}"
-          echo "Key Length: ${# secrets.EC2_SSH_KEY }"
+          echo "Key Length: ${#EC2_SSH_KEY}"
           echo "Public Key (anónimo):"
           echo "${{ secrets.EC2_SSH_KEY }}" | cut -c1-20
 
