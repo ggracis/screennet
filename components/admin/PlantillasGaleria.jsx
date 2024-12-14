@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
+import PantallasLocal from "../PantallasLocal";
 
 const PlantillasGaleria = () => {
   const [plantillas, setPlantillas] = useState([]);
@@ -14,7 +15,6 @@ const PlantillasGaleria = () => {
         const response = await fetch("/api/plantillas");
         const data = await response.json();
 
-        // Verifica que data sea un array
         if (Array.isArray(data)) {
           setPlantillas(data);
         } else {
@@ -36,22 +36,17 @@ const PlantillasGaleria = () => {
             className="border rounded-lg p-4 shadow-lg bg-gray-500/[.06]"
           >
             <h3 className="font-bold mb-2">Plantilla: {plantilla.nombre}</h3>
-            {plantilla.imagen && (
-              <Image
-                width={300}
-                height={100}
-                src={plantilla.imagen}
-                alt={plantilla.nombre}
-                className="w-full h-auto rounded"
-              />
-            )}
+
+            <div className="relative w-full mb-4 overflow-hidden max-h-[300px]">
+              <div className="origin-top-left w-[350%]  transform scale-[0.285]  ">
+                <PantallasLocal pantallaId={plantilla.id} preview={true} />
+              </div>
+            </div>
+
             <p className="my-4">{plantilla.descripcion || "Sin descripción"}</p>
             <div className="flex justify-center">
               <Link href={`/admin/plantillas/${plantilla.id}`}>
-                <Button
-                  variant="secondary"
-                  className="w-full text-white px-4 py-2 rounded"
-                >
+                <Button variant="secondary" className="w-full">
                   Personalizar
                 </Button>
               </Link>

@@ -41,6 +41,8 @@ const useScreenStore = create((set, get) => ({
   pollingInterval: null,
   lastCheckedHorario: null,
 
+  setPlantilla: (plantilla) => set({ plantilla }),
+
   fetchScreenData: async (pantallaId) => {
     try {
       set({ loading: true });

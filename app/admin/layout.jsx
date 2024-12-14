@@ -22,7 +22,7 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <div className="flex  bg-background">
+    <div className="flex bg-background">
       <Navbar />
 
       <div className="flex flex-col flex-1">

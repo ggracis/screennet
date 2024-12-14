@@ -18,6 +18,7 @@ import ProductosBuscador from "./ProductosBuscador";
 
 import { Card, CardContent } from "@/components/ui/card";
 import FondosSelector from "./FondosSelector";
+import PantallasLocal from "../PantallasLocal";
 
 const PlantillasEditor = ({ isNewPlantilla }) => {
   const router = useRouter();
@@ -47,6 +48,7 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   const [selectedSpace, setSelectedSpace] = useState(null);
   const [previewType, setPreviewType] = useState("image");
   const [selectedImage, setSelectedImage] = useState(null);
+  const [previewKey, setPreviewKey] = useState(0);
 
   useEffect(() => {
     const initializeData = async () => {
@@ -487,43 +489,40 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
 
     return (
       <div className="space-y-6">
-        <div className="border rounded-lg p-4 bg-gray-900/50">
-          <h3 className="text-lg font-semibold mb-4">Vista Previa del Grid</h3>
-          <div
-            className="grid gap-2 bg-gray-800/50 p-4 rounded-lg"
-            style={{
-              gridTemplateColumns: `repeat(${columnas}, 1fr)`,
-              gridTemplateRows: `repeat(${filas}, 60px)`,
-            }}
-          >
-            {Object.entries(espacios).map(([index, componente]) => {
-              const config = configComponentes[index];
-              return (
-                <GridCell
-                  key={index}
-                  index={parseInt(index) - 1}
-                  componente={componente}
-                  config={config}
-                  onConfigChange={handleConfigChange}
-                  componentesOptions={componentesOptions}
-                  isSelected={selectedSpace === parseInt(index)}
-                  onSelect={setSelectedSpace}
-                />
-              );
-            })}
-            {espaciosDisponibles.map((espacioNum) => (
+        <div
+          className="grid gap-2 bg-gray-800/50 p-4 rounded-lg"
+          style={{
+            gridTemplateColumns: `repeat(${columnas}, 1fr)`,
+            gridTemplateRows: `repeat(${filas}, 60px)`,
+          }}
+        >
+          {Object.entries(espacios).map(([index, componente]) => {
+            const config = configComponentes[index];
+            return (
               <GridCell
-                key={`empty-${espacioNum}`}
-                index={espacioNum - 1}
-                componente={null}
-                config={null}
+                key={index}
+                index={parseInt(index) - 1}
+                componente={componente}
+                config={config}
                 onConfigChange={handleConfigChange}
                 componentesOptions={componentesOptions}
-                isSelected={selectedSpace === espacioNum}
+                isSelected={selectedSpace === parseInt(index)}
                 onSelect={setSelectedSpace}
               />
-            ))}
-          </div>
+            );
+          })}
+          {espaciosDisponibles.map((espacioNum) => (
+            <GridCell
+              key={`empty-${espacioNum}`}
+              index={espacioNum - 1}
+              componente={null}
+              config={null}
+              onConfigChange={handleConfigChange}
+              componentesOptions={componentesOptions}
+              isSelected={selectedSpace === espacioNum}
+              onSelect={setSelectedSpace}
+            />
+          ))}
         </div>
 
         {selectedSpace && (
@@ -686,7 +685,6 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
       },
     };
 
-    // Modificar cómo se agrega el fondo
     if (plantilla?.fondo?.data?.id) {
       plantillaData.data.fondo = {
         id: plantilla.fondo.data.id,
@@ -719,7 +717,15 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
           ? "Plantilla creada correctamente"
           : "Plantilla actualizada correctamente",
       });
-      router.push("/admin/plantillas");
+
+      // Si es una nueva plantilla, redirigir
+      if (isNewPlantilla) {
+        router.push("/admin/plantillas");
+      } else {
+        // Si estamos editando, actualizar los datos localmente
+        await fetchPlantilla(); // Recargar los datos de la plantilla
+        setPreviewKey((prev) => prev + 1); // Forzar actualización del preview
+      }
     } catch (error) {
       console.error("Error processing plantilla:", error);
       toast({
@@ -756,68 +762,106 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   if (isLoading) return <p>Cargando...</p>;
 
   return (
-    <div className="p-6 rounded-lg shadow-md">
+    <div className="p-6 rounded-lg shadow-md gap-4">
       <h2 className="text-2xl font-bold mb-4">
         {isNewPlantilla
           ? "Crear Nueva Plantilla"
           : `Editar Plantilla: ${nombre}`}
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label className="block mb-2">Nombre:</Label>
-          <Input
-            type="text"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            className="border rounded p-2 w-full"
-          />
-        </div>
-        <div>
-          <Label className="block mb-2">Descripción:</Label>
-          <textarea
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-            className="border rounded p-2 w-full"
-          />
+        <div className="flex gap-4">
+          <div className="w-1/2">
+            <Label className="block mb-2">Nombre:</Label>
+            <Input
+              type="text"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className="border rounded p-2 w-full"
+            />
+          </div>
+          <div className="w-1/2">
+            <Label className="block mb-2">Descripción:</Label>
+            <textarea
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              className="border rounded p-2 w-full"
+            />
+          </div>
         </div>
 
         <div className="flex gap-4">
           <div className="w-1/2">
-            <Label className="block mb-2">Imagen:</Label>
-            {imagenPreview && (
-              <Image
-                src={imagenPreview}
-                alt="Imagen Preview"
-                width={100}
-                height={100}
-                className="mt-2"
-              />
-            )}
-            {imagen && !imagenPreview && (
-              <Image
-                src={imagen}
-                alt="Imagen"
-                width={720}
-                height={480}
-                className="mt-2"
-              />
-            )}
-            <Input
-              type="file"
-              onChange={(e) => handleFileChange(e, "imagen")}
-              accept="image/*"
-              className="mt-2 w-full bg-gray-900/50"
-            />
+            <Label className="block mb-2">Header:</Label>
+            <Select
+              onValueChange={setHeaderComponente}
+              value={headerComponente || "none"}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar header" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Ninguno</SelectItem>
+                {componentes
+                  .filter((c) => c.attributes.categoria === "Header")
+                  .map((componente) => (
+                    <SelectItem
+                      key={componente.id}
+                      value={componente.attributes.nombre}
+                    >
+                      {componente.attributes.nombre}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="w-1/2">
+            <Label className="block mb-2">Footer:</Label>
+            <Select
+              onValueChange={setFooterComponente}
+              value={footerComponente || "none"}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar footer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Ninguno</SelectItem>
+                {componentes
+                  .filter((c) => c.attributes.categoria === "Footer")
+                  .map((componente) => (
+                    <SelectItem
+                      key={componente.id}
+                      value={componente.attributes.nombre}
+                    >
+                      {componente.attributes.nombre}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="flex gap-4 max-h-[400px] ">
+          <div className="w-2/3">
+            <Label className="block mb-2">Vista previa:</Label>
+            <div className="relative w-full overflow-hidden h-[450px]">
+              <div className="origin-top-left w-[225%]  transform scale-[0.45]">
+                <PantallasLocal
+                  key={previewKey}
+                  pantallaId={id}
+                  preview={true}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="w-1/3">
             <Label className="block mb-2">Fondo:</Label>
             <Card className="mb-4">
               <CardContent className="relative w-full h-[300px] p-0 overflow-hidden">
                 {previewType === "image" ? (
                   <img
                     src={selectedImage || "/placeholder-image.jpg"}
-                    alt="Vista previa"
+                    alt="Fondo de la plantilla"
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -853,91 +897,53 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
             </div>
           </div>
         </div>
+        <div className="pt-20"></div>
 
-        <div className="flex gap-4">
-          <div className="w-1/2">
-            <Label className="block mb-2">Header:</Label>
-            <Select
-              onValueChange={setHeaderComponente}
-              value={headerComponente}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar header" />
-              </SelectTrigger>
-              <SelectContent>
-                {componentes
-                  .filter((c) => c.attributes.categoria === "Header")
-                  .map((componente) => (
-                    <SelectItem
-                      key={componente.id}
-                      value={componente.attributes.nombre}
-                    >
-                      {componente.attributes.nombre}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="border rounded-lg p-4 bg-gray-900/50 z-100">
+          <h3 className="text-lg font-semibold "> Distribución del Grid</h3>
 
-          <div className="w-1/2">
-            <Label className="block mb-2">Footer:</Label>
-            <Select
-              onValueChange={setFooterComponente}
-              value={footerComponente}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar footer" />
-              </SelectTrigger>
-              <SelectContent>
-                {componentes
-                  .filter((c) => c.attributes.categoria === "Footer")
-                  .map((componente) => (
-                    <SelectItem
-                      key={componente.id}
-                      value={componente.attributes.nombre}
-                    >
-                      {componente.attributes.nombre}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+          <p className="text-sm">
+            La plantilla se organiza en una cuadrícula (grid) que te permite
+            decidir cuántas filas y columnas necesitás para mostrar el
+            contenido.
+            <br />
+            <strong>Filas:</strong> Dividen la pantalla horizontalmente.
+            <strong> Columnas:</strong> Dividen la pantalla verticalmente.{" "}
+            <br />
+            Por ejemplo, podés elegir un grid de 3x2 (3 filas y 2 columnas) para
+            mostrar contenido de forma equilibrada.
+            <br /> Y despues podés agregar componentes a cada celda de la
+            cuadrícula para mostrar el contenido.
+          </p>
+
+          <div className="flex gap-4 my-4 ">
+            <div className="w-1/2">
+              <Label className="block mb-2">Filas:</Label>
+              <Input
+                type="number"
+                value={filas}
+                onChange={(e) => setFilas(parseInt(e.target.value) || 1)}
+                className="border rounded p-2 w-full"
+                min="1"
+                max="12"
+                step="1"
+              />
+            </div>
+            <div className="w-1/2">
+              <Label className="block mb-2">Columnas:</Label>
+              <Input
+                type="number"
+                value={columnas}
+                onChange={(e) => setColumnas(parseInt(e.target.value) || 1)}
+                className="border rounded p-2 w-full"
+                min="1"
+                max="12"
+                step="1"
+              />
+            </div>
           </div>
+          <div>{renderGridPreview()}</div>
         </div>
-
-        <Separator className="my-6" />
-
-        <div className="flex gap-4">
-          <div className="w-1/2">
-            <Label className="block mb-2">Columnas:</Label>
-            <Input
-              type="number"
-              value={columnas}
-              onChange={(e) => setColumnas(parseInt(e.target.value) || 1)}
-              className="border rounded p-2 w-full"
-              min="1"
-              max="12"
-              step="1"
-            />
-          </div>
-          <div className="w-1/2">
-            <Label className="block mb-2">Filas:</Label>
-            <Input
-              type="number"
-              value={filas}
-              onChange={(e) => setFilas(parseInt(e.target.value) || 1)}
-              className="border rounded p-2 w-full"
-              min="1"
-              max="12"
-              step="1"
-            />
-          </div>
-        </div>
-
-        <Separator className="my-4" />
-
-        <div>{renderGridPreview()}</div>
 
         <Button type="submit" variant="secondary" className="mt-6 w-full">
           {isNewPlantilla ? "Crear Plantilla" : "Guardar Cambios"}

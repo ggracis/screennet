@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import PantallasLocal from "@/components/PantallasLocal";
 
 const PantallasEditor = ({ isNewPantalla = false }) => {
   const { toast } = useToast();
@@ -211,151 +212,190 @@ const PantallasEditor = ({ isNewPantalla = false }) => {
   if (!pantalla?.attributes) return <div>Cargando...</div>;
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 space-y-6">
-      <h2 className="text-2xl font-semibold">Editar Pantalla</h2>
+    <div className="flex w-full gap-4">
+      <div className="w-2/5 border rounded-lg">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <h2 className="text-2xl font-semibold">
+            Editar Pantalla: {pantalla.attributes.nombre}
+          </h2>
 
-      <div className="space-y-2">
-        <Label htmlFor="nombre">Nombre</Label>
-        <Input
-          id="nombre"
-          value={pantalla.attributes.nombre}
-          onChange={(e) =>
-            setPantalla({
-              ...pantalla,
-              attributes: { ...pantalla.attributes, nombre: e.target.value },
-            })
-          }
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="local">Local</Label>
-        <Select onValueChange={setSelectedLocal} value={selectedLocal}>
-          <SelectTrigger>
-            <SelectValue placeholder="Seleccionar local" />
-          </SelectTrigger>
-          <SelectContent>
-            {locales.map((local) => (
-              <SelectItem key={local.id} value={local.id.toString()}>
-                {local.attributes.nombre}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="descripcion">Descripción</Label>
-        <Textarea
-          id="descripcion"
-          value={pantalla.attributes.descripcion}
-          onChange={(e) =>
-            setPantalla({
-              ...pantalla,
-              attributes: {
-                ...pantalla.attributes,
-                descripcion: e.target.value,
-              },
-            })
-          }
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="defaultPlantilla">Plantilla por defecto</Label>
-        <Select onValueChange={setDefaultPlantilla} value={defaultPlantilla}>
-          <SelectTrigger>
-            <SelectValue placeholder="Seleccionar plantilla por defecto" />
-          </SelectTrigger>
-          <SelectContent>
-            {plantillas.map((plantilla) => (
-              <SelectItem key={plantilla.id} value={plantilla.id.toString()}>
-                {plantilla.nombre}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <h3 className="text-xl font-semibold">Plantillas por horario</h3>
-      {horarios.map((horario, index) => (
-        <div key={index} className="border p-4 rounded space-y-4">
-          <Select
-            onValueChange={(value) =>
-              handleHorarioChange(index, "plantilla", value)
-            }
-            value={horario.plantilla}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar plantilla" />
-            </SelectTrigger>
-            <SelectContent>
-              {plantillas.map((plantilla) => (
-                <SelectItem key={plantilla.id} value={plantilla.id.toString()}>
-                  {plantilla.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="grid grid-cols-7 gap-2">
-            {["D", "L", "M", "X", "J", "V", "S"].map((dia, diaIndex) => (
-              <div key={dia} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`${dia}-${index}`}
-                  checked={horario.dias.includes(diaIndex.toString())}
-                  onCheckedChange={(checked) => {
-                    const newDias = checked
-                      ? [...horario.dias, diaIndex.toString()]
-                      : horario.dias.filter((d) => d !== diaIndex.toString());
-                    handleHorarioChange(index, "dias", newDias);
-                  }}
-                />
-                <Label htmlFor={`${dia}-${index}`}>{dia}</Label>
-              </div>
-            ))}
+          <div className="space-y-2">
+            <Label htmlFor="nombre">Nombre</Label>
+            <Input
+              id="nombre"
+              value={pantalla.attributes.nombre}
+              onChange={(e) =>
+                setPantalla({
+                  ...pantalla,
+                  attributes: {
+                    ...pantalla.attributes,
+                    nombre: e.target.value,
+                  },
+                })
+              }
+            />
           </div>
 
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <Label>Hora de inicio</Label>
-              <Input
-                type="time"
-                value={horario.horaInicio}
-                onChange={(e) =>
-                  handleHorarioChange(index, "horaInicio", e.target.value)
-                }
-              />
-            </div>
-            <div className="flex-1">
-              <Label>Hora de fin</Label>
-              <Input
-                type="time"
-                value={horario.horaFin}
-                onChange={(e) =>
-                  handleHorarioChange(index, "horaFin", e.target.value)
-                }
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="local">Local</Label>
+            <Select onValueChange={setSelectedLocal} value={selectedLocal}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar local" />
+              </SelectTrigger>
+              <SelectContent>
+                {locales.map((local) => (
+                  <SelectItem key={local.id} value={local.id.toString()}>
+                    {local.attributes.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              onClick={() => handleRemoveHorario(index)}
-              variant="destructive"
+
+          <div className="space-y-2">
+            <Label htmlFor="descripcion">Descripción</Label>
+            <Textarea
+              id="descripcion"
+              value={pantalla.attributes.descripcion}
+              onChange={(e) =>
+                setPantalla({
+                  ...pantalla,
+                  attributes: {
+                    ...pantalla.attributes,
+                    descripcion: e.target.value,
+                  },
+                })
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="defaultPlantilla">Plantilla por defecto</Label>
+            <Select
+              onValueChange={setDefaultPlantilla}
+              value={defaultPlantilla}
             >
-              Quitar Horario
-            </Button>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar plantilla por defecto" />
+              </SelectTrigger>
+              <SelectContent>
+                {plantillas.map((plantilla) => (
+                  <SelectItem
+                    key={plantilla.id}
+                    value={plantilla.id.toString()}
+                  >
+                    {plantilla.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <h3 className="text-xl font-semibold">Plantillas por horario</h3>
+          {horarios.map((horario, index) => (
+            <div key={index} className="border p-4 rounded space-y-4">
+              <Select
+                onValueChange={(value) =>
+                  handleHorarioChange(index, "plantilla", value)
+                }
+                value={horario.plantilla}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar plantilla" />
+                </SelectTrigger>
+                <SelectContent>
+                  {plantillas.map((plantilla) => (
+                    <SelectItem
+                      key={plantilla.id}
+                      value={plantilla.id.toString()}
+                    >
+                      {plantilla.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="grid grid-cols-7 gap-2">
+                {["D", "L", "M", "X", "J", "V", "S"].map((dia, diaIndex) => (
+                  <div key={dia} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${dia}-${index}`}
+                      checked={horario.dias.includes(diaIndex.toString())}
+                      onCheckedChange={(checked) => {
+                        const newDias = checked
+                          ? [...horario.dias, diaIndex.toString()]
+                          : horario.dias.filter(
+                              (d) => d !== diaIndex.toString()
+                            );
+                        handleHorarioChange(index, "dias", newDias);
+                      }}
+                    />
+                    <Label htmlFor={`${dia}-${index}`}>{dia}</Label>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex space-x-4">
+                <div className="flex-1">
+                  <Label>Hora de inicio</Label>
+                  <Input
+                    type="time"
+                    value={horario.horaInicio}
+                    onChange={(e) =>
+                      handleHorarioChange(index, "horaInicio", e.target.value)
+                    }
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label>Hora de fin</Label>
+                  <Input
+                    type="time"
+                    value={horario.horaFin}
+                    onChange={(e) =>
+                      handleHorarioChange(index, "horaFin", e.target.value)
+                    }
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  onClick={() => handleRemoveHorario(index)}
+                  variant="destructive"
+                >
+                  Quitar Horario
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          <Button type="button" onClick={handleAddHorario} variant="outline">
+            Agregar Horario
+          </Button>
+
+          <div className="flex gap-4">
+            <Button type="submit">Guardar Cambios</Button>
+          </div>
+        </form>
+      </div>
+
+      {!isNewPantalla && (
+        <div className="w-3/5">
+          <div className="fixed top-30 right-5 w-[55%] border rounded-lg p-4 bg-background">
+            <h3 className="text-xl font-semibold mb-4 px-6">Vista Previa</h3>
+            <div className="relative w-full bg-gray-100 rounded-lg overflow-hidden">
+              <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+                <div className="absolute top-0 left-0 w-full h-full">
+                  <div className="origin-top-left scale-50 w-[200%] h-[200%] transform">
+                    <PantallasLocal pantallaId={id} />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      ))}
-
-      <Button type="button" onClick={handleAddHorario} variant="outline">
-        Agregar Horario
-      </Button>
-
-      <Button type="submit">Guardar Cambios</Button>
-    </form>
+      )}
+    </div>
   );
 };
 
