@@ -42,7 +42,7 @@ export default function Component() {
                 <div className="flex-1">
                   <p className="font-semibold">2. Diseñá una plantilla</p>
                   <p className="text-sm text-gray-500">
-                    Personalizá headers, columnas, videos y más para tus
+                    Personalizá cabeceras, columnas, videos y más para tus
                     pantallas.
                   </p>
                 </div>
