@@ -24,6 +24,13 @@ jobs:
           script: |
             cd ~/screennet
 
+            # Cargar NVM (ajusta la ruta según tu configuración)
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            # O alternativamente, usar las rutas absolutas
+            export PATH="$HOME/.nvm/versions/node/$(node -v)/bin:$PATH"
+
             # Guardar el hash del último commit
             LAST_COMMIT=$(git rev-parse HEAD)
 
@@ -44,4 +51,4 @@ jobs:
 
             # Construir y reiniciar
             npm run build
-            pm2 restart screennet --update-env
+            $HOME/.npm-global/bin/pm2 restart screennet --update-env
