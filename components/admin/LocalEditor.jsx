@@ -21,42 +21,38 @@ export function LocalEditor() {
   const { toast } = useToast();
 
   useEffect(() => {
+    const fetchLocalData = async () => {
+      try {
+        const userResponse = await fetch(`/api/users/${userId}`, {
+          cache: "no-store",
+        });
+        if (!userResponse.ok)
+          throw new Error("Error al obtener datos del usuario");
+        const userData = await userResponse.json();
+
+        if (userData.user.locals && userData.user.locals.length > 0) {
+          const localId = userData.user.locals[0].id;
+          const localResponse = await fetch(`/api/locals/${localId}`, {
+            cache: "no-store",
+          });
+          if (!localResponse.ok)
+            throw new Error("Error al obtener datos del local");
+          const localData = await localResponse.json();
+          setLocalData(localData.local);
+        } else {
+          throw new Error("No se encontró información del local");
+        }
+      } catch (error) {
+        handleError("No se pudo cargar la información del local", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (userId) {
       fetchLocalData();
     }
   }, [userId]);
-
-  const fetchLocalData = async () => {
-    try {
-      // Obtener datos del usuario
-      const userResponse = await fetch(`/api/users/${userId}`, {
-        cache: "no-store",
-      });
-      if (!userResponse.ok)
-        throw new Error("Error al obtener datos del usuario");
-      const userData = await userResponse.json();
-
-      if (userData.user.locals && userData.user.locals.length > 0) {
-        const localId = userData.user.locals[0].id;
-
-        // Obtener datos del local
-        const localResponse = await fetch(`/api/locals/${localId}`, {
-          cache: "no-store",
-        });
-        if (!localResponse.ok)
-          throw new Error("Error al obtener datos del local");
-        const localData = await localResponse.json();
-
-        setLocalData(localData.local);
-      } else {
-        throw new Error("No se encontró información del local");
-      }
-    } catch (error) {
-      handleError("No se pudo cargar la información del local", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleInputChange = (field, value) => {
     setLocalData((prevData) => {

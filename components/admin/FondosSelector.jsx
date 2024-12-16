@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Image from "next/image";
 
 const FondosSelector = ({ onSelect, selectedFondo }) => {
   const [fondos, setFondos] = useState([]);
@@ -95,10 +96,14 @@ const FondosSelector = ({ onSelect, selectedFondo }) => {
                       autoPlay
                     />
                   ) : (
-                    <img
+                    <Image
                       src={getFullUrl(fondo.url)}
                       alt={fondo.name}
-                      className="w-full h-32 object-cover"
+                      fill={true}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      priority={true}
+                      sizes="100vw"
+                      quality={75}
                     />
                   )}
                   <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-2">

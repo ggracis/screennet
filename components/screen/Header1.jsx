@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import MarqueeSocial from "../MarqueeSocial";
+import Image from "next/image";
 
 const Header = () => {
   const params = useParams();
@@ -77,10 +78,13 @@ const Header = () => {
       {/* Logo - ancho fijo izquierda */}
       <div className="w-[200px]">
         {local?.attributes?.logoURL?.data?.attributes?.url && (
-          <img
+          <Image
             src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${local.attributes.logoURL.data.attributes.url}`}
             alt={`Logo ${local.attributes.nombre}`}
+            width={64}
+            height={64}
             className="h-16 w-auto"
+            priority={true}
           />
         )}
       </div>

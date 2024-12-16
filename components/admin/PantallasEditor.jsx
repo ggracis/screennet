@@ -97,7 +97,7 @@ const PantallasEditor = ({ isNewPantalla = false }) => {
     };
 
     fetchData();
-  }, [id, isNewPantalla]);
+  }, [id, isNewPantalla, toast]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

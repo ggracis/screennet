@@ -8,7 +8,7 @@ export async function GET() {
         Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
       },
       cache: "no-store",
-      next: { revalidate: 0 },
+      next: { revalidate: 60 },
     });
 
     if (!res.ok) {

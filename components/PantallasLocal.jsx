@@ -135,10 +135,14 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
               className="absolute inset-0 w-full h-full object-cover"
             />
           ) : (
-            <img
+            <Image
               src={fondoUrl}
               alt="Fondo"
+              fill={true}
               className="absolute inset-0 w-full h-full object-cover"
+              priority={true}
+              sizes="100vw"
+              quality={75}
             />
           )}
           <div className="absolute inset-0 bg-black/50" />{" "}

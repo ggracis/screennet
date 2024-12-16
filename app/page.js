@@ -39,7 +39,14 @@ export default function Home() {
             <div className="flex lg:flex-1">
               <a href="#" className="-m-1.5 p-1.5">
                 <span className="sr-only">SCREEN.NET</span>
-                <img alt="" src="/icon.png" className="h-8 w-auto" />
+                <Image
+                  width={32}
+                  height={32}
+                  alt="Screen.net"
+                  title="Screen.net"
+                  src="/icon.png"
+                  className="h-8 w-auto"
+                />
               </a>
             </div>
             <div className="flex lg:hidden">
@@ -82,7 +89,14 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <a href="#" className="-m-1.5 p-1.5">
                   <span className="sr-only">SCREEN.NET</span>
-                  <img alt="" src="/icon.png" className="h-8 w-auto" />
+                  <Image
+                    width={32}
+                    height={32}
+                    alt="Screen.net"
+                    title="Screen.net"
+                    src="/icon.png"
+                    className="h-8 w-auto"
+                  />
                 </a>
                 <button
                   type="button"
