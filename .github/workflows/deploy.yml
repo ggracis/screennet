@@ -15,14 +15,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Verificar Variables de Entorno
-        run: |
-          echo "Host: ${{ secrets.EC2_HOST }}"
-          echo "Username: ${{ secrets.EC2_USERNAME }}"
-          echo "Key Length: ${#${{ secrets.EC2_SSH_KEY }}}"
-          echo "Public Key (anónimo):"
-          echo "${{ secrets.EC2_SSH_KEY }}" | cut -c1-20
-
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
