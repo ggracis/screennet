@@ -7,7 +7,6 @@ export async function GET() {
       headers: {
         Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
       },
-      cache: "no-store",
       next: { revalidate: 60 },
     });
 
