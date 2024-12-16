@@ -51,4 +51,4 @@ jobs:
 
             # Construir y reiniciar
             npm run build
-            $HOME/.npm-global/bin/pm2 restart screennet --update-env
+            pm2 restart screennet --update-env
