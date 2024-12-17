@@ -3,9 +3,11 @@ import { NextResponse } from "next/server";
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get("page") || 1;
-    const pageSize = searchParams.get("pageSize") || 10;
+    const page = parseInt(searchParams.get("page")) || 1;
+    const pageSize = parseInt(searchParams.get("pageSize")) || 10;
     const search = searchParams.get("search") || "";
+    const sort = searchParams.get("sort") || "nombre:asc";
+    const [sortField, sortDirection] = sort.split(":");
 
     let url = `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/productos?pagination[page]=${page}&pagination[pageSize]=${pageSize}&populate=*`;
 
@@ -13,7 +15,6 @@ export async function GET(request) {
       url += `&filters[$or][0][nombre][$containsi]=${search}`;
     }
 
-    // Mantén los filtros de categoría y subcategoría si los necesitas
     const categoryFilter = searchParams.get("filters[categoria][id][$eq]");
     if (categoryFilter) {
       url += `&filters[categoria][id][$eq]=${categoryFilter}`;
@@ -26,7 +27,7 @@ export async function GET(request) {
       url += `&filters[subcategoria][id][$eq]=${subcategoriaFilter}`;
     }
 
-    url += `&sort=nombre:asc`;
+    url += `&sort=${sortField}:${sortDirection}`;
 
     console.log("API URL:", url);
 
@@ -42,27 +43,9 @@ export async function GET(request) {
 
     const products = await response.json();
 
-    const adaptedProducts = products.data.map((product) => ({
-      id: product.id,
-      attributes: {
-        nombre: product.attributes.nombre,
-        descripcion: product.attributes.descripcion,
-        unidadMedida: product.attributes.unidadMedida,
-        precios: product.attributes.precios,
-        activo: product.attributes.activo,
-        createdAt: product.attributes.createdAt,
-        updatedAt: product.attributes.updatedAt,
-        foto: product.attributes.foto,
-        categoria: product.attributes.categoria,
-        subcategoria: product.attributes.subcategoria,
-      },
-    }));
-
     return NextResponse.json({
-      data: adaptedProducts,
-      meta: {
-        pagination: products.meta.pagination,
-      },
+      data: products.data,
+      meta: products.meta,
     });
   } catch (error) {
     console.error("Error fetching products:", error);
