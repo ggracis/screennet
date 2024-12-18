@@ -1,3 +1,4 @@
+import HeaderSection from "@/components/admin/HeaderSection";
 import PlantillasGaleria from "@/components/admin/PlantillasGaleria";
 import { Button } from "@/components/ui/button";
 import { SquarePlusIcon } from "lucide-react";
@@ -11,22 +12,18 @@ export async function generateMetadata() {
 const Plantillas = async () => {
   return (
     <main>
-      <div className="flex rounded-lg items-center">
-        <div className="p-6">
-          <p className="text-xl font-semibold my-2 underline decoration-sky-500 hover:decoration-4">
-            🎨 Plantillas
-          </p>
-          <p className="text-lg">Diseñá a tu gusto. </p>
-        </div>
-        <div className="p-6">
-          <p className="mt-4">
+      <HeaderSection
+        title="🎨 Plantillas"
+        subtitle="Diseñá a tu gusto"
+        description={
+          <>
             Creá plantillas personalizadas con componentes como listas de
             productos, redes sociales, videos y más.
             <br /> Ajustá el header, footer, columnas, fondos...
             <br /> ¡Hacé que tus pantallas reflejen tu estilo!
-          </p>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="p-6 m-4 rounded-lg border w-11/12 mx-auto">
         <div className="mb-4 flex justify-center items-center">

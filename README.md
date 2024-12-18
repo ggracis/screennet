@@ -21,7 +21,7 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
 ### Productos
 - [✔️] CRUD de productos
   - [✔️] Los precios pueden variar entre tipos de productos (unidad, kilo, porción)
-  - [❌] Poder cambiar el precio de una categoría/subcategoría fijando un porcentaje sobre el precio original
+  - [✔️] Poder cambiar el precio de una categoría/subcategoría fijando un porcentaje sobre el precio original
   - [❌] Poder agregar/modificar/eliminar categorías/subcategorías
   
 ### Marcas
@@ -33,8 +33,6 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
   - [❌] En el editor de pantallas, poder establecer fechas específicas para que una plantilla se aplique en un rango de fechas (ej.: Black Friday, Navidad, etc.)
   - [❌] Poder seleccionar una pantalla para entrar en modo pantalla completa
   - [❌] Sistema de programación de contenido por fechas
- 
-
   
 
 ### Plantillas
@@ -42,6 +40,7 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
   - [✔️] Crear un sistema de edición para las plantillas (asignando productos a plantillas)
   - [❌] Modo pantalla completa
   - [❌] Transiciones entre contenidos
+  - [❌] Poder elegir modo claro o oscuro
 
 ### Modulos
  
@@ -56,6 +55,7 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
 
 ### Generales
 - [✔️] Generar dinámicamente JPG de vista previa de pantallas, plantillas y modulos > Se resolvió mostrando el componente
+- [❌] Podemos usar Framer Motion para animar el cambio de contenido
   
 ### Analíticas y Reportes
 - [❌] Dashboard con estadísticas de uso

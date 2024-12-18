@@ -18,7 +18,7 @@ import ProductosBuscador from "./ProductosBuscador";
 
 import { Card, CardContent } from "@/components/ui/card";
 import FondosSelector from "./FondosSelector";
-import PantallasLocal from "../PantallasLocal";
+import PlantillasPreview from "./PlantillasPreview";
 
 const PlantillasEditor = ({ isNewPlantilla }) => {
   const router = useRouter();
@@ -840,15 +840,48 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
             </Select>
           </div>
         </div>
-        <div className="flex gap-4 max-h-[400px] ">
+        <div className="flex gap-4 mt-8">
           <div className="w-2/3">
             <Label className="block mb-2">Vista previa:</Label>
-            <div className="relative w-full overflow-hidden h-[450px]">
-              <div className="origin-top-left w-[225%]  transform scale-[0.45]">
-                <PantallasLocal
-                  key={previewKey}
-                  pantallaId={id}
-                  preview={true}
+            <div
+              className="relative w-full overflow-hidden"
+              style={{ height: "600px" }}
+            >
+              <div className="origin-top-left w-[225%] transform scale-[0.45]">
+                <PlantillasPreview
+                  plantillaId={id}
+                  plantillaData={
+                    isNewPlantilla
+                      ? {
+                          id: "new",
+                          attributes: {
+                            nombre,
+                            descripcion,
+                            columnas,
+                            filas,
+                            componentes: {
+                              header: headerComponente,
+                              footer: footerComponente,
+                              espacios,
+                              config_componentes: configComponentes,
+                            },
+                            fondo: selectedImage
+                              ? {
+                                  data: {
+                                    attributes: {
+                                      url: selectedImage,
+                                      mime:
+                                        previewType === "video"
+                                          ? "video/mp4"
+                                          : "image/jpeg",
+                                    },
+                                  },
+                                }
+                              : null,
+                          },
+                        }
+                      : null
+                  }
                 />
               </div>
             </div>

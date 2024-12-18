@@ -1,16 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
+import Image from "next/image";
 
 export default function Component() {
   return (
-    <main>
-      <div className="p-6 space-y-6 max-w-3xl mx-auto">
-        <Card>
+    <main className="min-h-screen flex items-center">
+      <div className="p-6 space-y-6 max-w-3xl mx-auto ">
+        <Card className="place-self-center">
           <CardHeader>
             <CardTitle className="text-3xl flex items-center gap-2">
               👋 ¡Bienvenido a ScreenNet!
             </CardTitle>
+            <Image src="/logo.png" alt="ScreenNet" width={400} height={100} />
           </CardHeader>
           <CardContent>
             <p className="text-lg mb-6">

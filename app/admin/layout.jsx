@@ -25,14 +25,7 @@ export default function AdminLayout({ children }) {
     <div className="flex bg-background">
       <Navbar />
 
-      <div className="flex flex-col flex-1">
-        <header className="h-16 border-b flex items-center px-6">
-          <Link href="/admin">
-            <h1 className="text-2xl font-bold my-6">ScreenNet</h1>
-          </Link>
-        </header>
-        {children}
-      </div>
+      <div className="flex flex-col flex-1">{children}</div>
       <Toaster />
     </div>
   );

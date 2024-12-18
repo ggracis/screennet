@@ -1,22 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
-  console.log("Params recibidos:", params);
-  console.log("ID de pantalla:", params.id);
-  console.log("STRAPI_API_URL:", process.env.STRAPI_API_URL);
-
-  if (!params.id) {
-    return new Response(
-      JSON.stringify({ error: "ID de pantalla no proporcionado" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  }
-
   const { id } = params;
-  const timestamp = Date.now();
 
   try {
     const headers = {
@@ -24,29 +9,95 @@ export async function GET(request, { params }) {
       cache: "no-store",
     };
 
-    console.log(`Obteniendo datos de la pantalla ${id}`);
-
+    // 1. Obtener datos de la pantalla
     const pantallaResponse = await fetch(
-      `${process.env.STRAPI_API_URL}/pantallas/${id}?timestamp=${timestamp}&populate=*`,
+      `${process.env.STRAPI_API_URL}/pantallas/${id}?populate=*`,
       { headers }
     );
 
     if (!pantallaResponse.ok) {
       throw new Error(
-        `Error al obtener datos de la pantalla: ${pantallaResponse.status} ${pantallaResponse.statusText}`
+        `Error al obtener datos de la pantalla: ${pantallaResponse.status}`
       );
     }
 
     const pantallaData = await pantallaResponse.json();
-    console.log(`Datos de la pantalla obtenidos:`, pantallaData);
 
-    return NextResponse.json({ pantalla: pantallaData.data });
-  } catch (error) {
-    console.error("Error en la obtención de datos de la pantalla:", error);
-    return NextResponse.json(
-      { error: "Error interno del servidor", details: error.message },
-      { status: 500 }
+    // 2. Determinar qué plantilla usar según el horario
+    const ahora = new Date();
+    const horaActual = `${ahora.getHours().toString().padStart(2, "0")}:${ahora
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")}`;
+    const diaActual = ahora.getDay(); // 0-6 (domingo-sábado)
+
+    const diasSemana = {
+      0: "0", // domingo
+      1: "l",
+      2: "m",
+      3: "x",
+      4: "j",
+      5: "v",
+      6: "s",
+    };
+
+    const diaActualStr = diasSemana[diaActual];
+    let plantillaId = null;
+
+    // Buscar en el horario de la pantalla
+    const plantilla_horario = pantallaData.data.attributes.plantilla_horario;
+
+    // Primero intentamos encontrar una plantilla para el horario actual
+    for (const [key, horario] of Object.entries(plantilla_horario)) {
+      if (key === "default") continue;
+
+      if (horario.dias.includes(diaActualStr)) {
+        const [horaInicio, horaFin] = horario.horas;
+        if (horaActual >= horaInicio && horaActual <= horaFin) {
+          plantillaId = horario.plantilla;
+          break;
+        }
+      }
+    }
+
+    // Si no encontramos una plantilla específica, usamos la default
+    if (!plantillaId && plantilla_horario.default) {
+      plantillaId = plantilla_horario.default.plantilla;
+    }
+
+    if (!plantillaId) {
+      throw new Error("No se encontró una plantilla activa para esta pantalla");
+    }
+
+    // 3. Obtener datos de la plantilla
+    const plantillaResponse = await fetch(
+      `${process.env.STRAPI_API_URL}/plantillas/${plantillaId}?populate=*`,
+      { headers }
     );
+
+    if (!plantillaResponse.ok) {
+      throw new Error(
+        `Error al obtener datos de la plantilla: ${plantillaResponse.status}`
+      );
+    }
+
+    const plantillaData = await plantillaResponse.json();
+
+    // 4. Construir la respuesta final
+    return NextResponse.json({
+      pantalla: {
+        ...pantallaData.data,
+        attributes: {
+          ...pantallaData.data.attributes,
+          plantilla: {
+            data: plantillaData.data,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error en la obtención de datos:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 

@@ -16,7 +16,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
   const [footerHeight, setFooterHeight] = useState(0);
 
   const {
-    initializePolling: initProductPolling,
+    initializePolling,
     cleanup: cleanupProducts,
     fetchAllProducts,
   } = useProductStore();
@@ -28,12 +28,32 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
         setLoading(false);
       } else if (pantallaId) {
         try {
-          const response = await fetch(`/api/plantillas/${pantallaId}`);
+          const response = await fetch(`/api/pantallas/${pantallaId}`);
           const data = await response.json();
-          if (data.plantilla) {
-            setLocalPlantilla(data.plantilla);
+
+          if (data.error) {
+            throw new Error(data.error);
           }
+
+          console.log("Datos recibidos de la API:", data);
+
+          if (!data.pantalla) {
+            throw new Error("No se encontraron datos de la pantalla");
+          }
+
+          setLocalPantalla(data.pantalla);
+
+          if (!data.pantalla.attributes?.plantilla?.data) {
+            throw new Error(
+              "No se encontró una plantilla activa para esta pantalla"
+            );
+          }
+
+          setLocalPlantilla(data.pantalla.attributes.plantilla.data);
+          await fetchAllProducts();
+          initializePolling();
         } catch (err) {
+          console.error("Error fetching screen data:", err);
           setError(err.message);
         } finally {
           setLoading(false);
@@ -42,7 +62,17 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
     };
 
     fetchData();
-  }, [pantallaId, plantillaPreview]);
+
+    return () => {
+      cleanupProducts();
+    };
+  }, [
+    pantallaId,
+    plantillaPreview,
+    fetchAllProducts,
+    initializePolling,
+    cleanupProducts,
+  ]);
 
   if (loading) {
     return <div>Cargando...</div>;

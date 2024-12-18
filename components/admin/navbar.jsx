@@ -10,6 +10,7 @@ import {
   LogOut,
   Tags,
   BrushIcon,
+  HomeIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -62,6 +63,10 @@ export default function Navbar() {
             </Button>
           </div>
           <div className="space-y-4">
+            <Button variant="ghost" className="flex items-center w-full">
+              <HomeIcon className="h-5 w-5" />
+              <span className="ml-2">Inicio</span>
+            </Button>
             <Button variant="ghost" className="flex items-center w-full">
               <MapPin className="h-5 w-5" />
               <span className="ml-2">Locales</span>
@@ -128,6 +133,16 @@ export default function Navbar() {
           <Layout className="h-5 w-5" />
         </Button>
         <nav className="space-y-4 gap-4">
+          <Link href="/admin">
+            <Button
+              variant={isMounted && pathname === "/admin" ? "outline" : "ghost"}
+              className="flex items-center w-full justify-start my-2"
+              title="Inicio"
+            >
+              <HomeIcon className="h-5 w-5" />
+              {isSidebarOpen && <span className="ml-2">Inicio</span>}
+            </Button>
+          </Link>
           <Link href="/admin/locales">
             <Button
               variant={

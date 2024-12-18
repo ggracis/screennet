@@ -1,13 +1,13 @@
 // components/admin/PlantillasGaleria.jsx
 "use client";
-import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import PantallasLocal from "../PantallasLocal";
+import PlantillasPreview from "./PlantillasPreview";
 
 const PlantillasGaleria = () => {
   const [plantillas, setPlantillas] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPlantillas = async () => {
@@ -22,24 +22,33 @@ const PlantillasGaleria = () => {
         }
       } catch (error) {
         console.error("Error al obtener las plantillas:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchPlantillas();
   }, []);
 
+  if (loading) return <div>Cargando plantillas...</div>;
+
   return (
     <div className="grid grid-cols-3 gap-4">
-      {Array.isArray(plantillas) && plantillas.length > 0 ? (
+      {plantillas.length > 0 ? (
         plantillas.map((plantilla) => (
           <div
             key={plantilla.id}
             className="border rounded-lg p-4 shadow-lg bg-gray-500/[.06]"
           >
-            <h3 className="font-bold mb-2">Plantilla: {plantilla.nombre}</h3>
+            <h3 className="font-bold mb-2">
+              Plantilla: {plantilla.nombre || "Sin nombre"}
+            </h3>
 
-            <div className="relative w-full mb-4 overflow-hidden max-h-[300px]">
-              <div className="origin-top-left w-[350%]  transform scale-[0.285]  ">
-                <PantallasLocal pantallaId={plantilla.id} preview={true} />
+            <div
+              className="relative w-full mb-4 overflow-hidden"
+              style={{ height: "280px" }}
+            >
+              <div className="origin-top-left w-[350%] transform scale-[0.285]">
+                <PlantillasPreview plantillaId={plantilla.id} />
               </div>
             </div>
 

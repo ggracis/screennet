@@ -162,6 +162,20 @@ const useProductStore = create(
         }
         return false;
       },
+
+      fetchProductsByIds: async (ids) => {
+        try {
+          const idsString = ids.join(",");
+          const response = await fetch(`/api/productos?ids=${idsString}`);
+          const data = await response.json();
+
+          if (Array.isArray(data)) {
+            set({ products: data });
+          }
+        } catch (error) {
+          console.error("Error fetching products by IDs:", error);
+        }
+      },
     }),
     {
       name: "product-storage",
