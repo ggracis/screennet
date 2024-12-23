@@ -7,7 +7,8 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import useProductStore from "@/stores/useProductStore";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 
 const GranProducto1 = ({ productos: productosIds = [] }) => {
   const { products, fetchProductsByIds } = useProductStore();
@@ -54,8 +55,8 @@ const GranProducto1 = ({ productos: productosIds = [] }) => {
   }
 
   return (
-    <section className="text-gray-400 bg-gray-900 body-font overflow-hidden">
-      <div className="container px-5 py-24 mx-auto">
+    <section className="text-gray-400 relative h-screen flex flex-col">
+      <div className="flex-1 container mx-auto px-5 py-10 flex items-center justify-center">
         <Carousel
           opts={{
             align: "start",
@@ -63,24 +64,64 @@ const GranProducto1 = ({ productos: productosIds = [] }) => {
           }}
           plugins={[
             Autoplay({
-              delay: 4000,
+              delay: 10000,
+              stopOnInteraction: false,
             }),
           ]}
+          className="w-full"
         >
           <CarouselContent>
             {filteredProducts.map((producto) => (
               <CarouselItem key={producto.id}>
-                <div className="lg:w-4/5 mx-auto flex flex-wrap">
-                  <div className="lg:w-1/2 w-full lg:pr-10 lg:py-6 mb-6 lg:mb-0">
-                    <h2 className="text-sm title-font text-gray-500 tracking-widest">
-                      {producto.attributes.categoria?.data?.attributes
-                        ?.nombre || "Sin categoría"}
-                    </h2>
-                    <h1 className="text-white text-3xl title-font font-medium mb-4">
+                <div className="flex items-center justify-center gap-8 h-[80vh]">
+                  {/* Columna izquierda - Información */}
+
+                  <div className="w-1/2 pr-8 space-y-4">
+                    <h1 className="text-6xl font-medium title-font mb-4 text-white">
                       {producto.attributes.nombre}
                     </h1>
+                    <h3 className="text-2xl title-font text-gray-600">
+                      {producto.attributes.categoria?.data?.attributes
+                        ?.nombre && (
+                        <>
+                          {producto.attributes.categoria.data.attributes.nombre}
+                        </>
+                      )}
+                      {producto.attributes.subcategoria?.data?.attributes
+                        ?.nombre && (
+                        <>
+                          {" "}
+                          -{" "}
+                          {
+                            producto.attributes.subcategoria.data.attributes
+                              .nombre
+                          }
+                        </>
+                      )}
+                    </h3>
 
-                    {/* Carousel de medios */}
+                    {/* Precios */}
+                    <div className="space-y-2">
+                      {Object.entries(producto.attributes.precios || {})
+                        .filter(([_, precio]) => precio)
+                        .map(([titulo, precio]) => (
+                          <div
+                            key={`${producto.id}-${titulo}`}
+                            className="flex items-center gap-2"
+                          >
+                            <span className="text-gray-300 text-4xl">
+                              {titulo}:
+                            </span>
+                            <span className="text-4xl font-bold text-white">
+                              ${precio}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Columna derecha - Galería */}
+                  <div className="w-1/2 h-full">
                     {procesarMedios(producto).length > 0 ? (
                       <Carousel
                         opts={{
@@ -92,24 +133,32 @@ const GranProducto1 = ({ productos: productosIds = [] }) => {
                             delay: 2000,
                           }),
                         ]}
+                        className="h-full"
                       >
-                        <CarouselContent>
+                        <CarouselContent className="h-full">
                           {procesarMedios(producto).map((medio, idx) => (
-                            <CarouselItem key={idx}>
+                            <CarouselItem key={idx} className="h-full">
                               {medio.tipo === "video" ? (
                                 <video
-                                  className="lg:w-full h-64 object-cover object-center rounded"
+                                  className="w-full h-full object-cover"
                                   autoPlay
                                   muted
                                   loop
+                                  playsInline
                                 >
                                   <source src={medio.url} type="video/mp4" />
                                 </video>
                               ) : (
-                                <img
+                                <Image
                                   alt={producto.attributes.nombre}
-                                  className="lg:w-full h-64 object-cover object-center rounded"
+                                  className="w-full h-full object-contain"
                                   src={medio.url}
+                                  width={800}
+                                  height={800}
+                                  priority
+                                  quality={100}
+                                  loading="eager"
+                                  blurDataURL={medio.url}
                                 />
                               )}
                             </CarouselItem>
@@ -117,47 +166,12 @@ const GranProducto1 = ({ productos: productosIds = [] }) => {
                         </CarouselContent>
                       </Carousel>
                     ) : (
-                      <div className="h-64 bg-gray-800 rounded flex items-center justify-center">
+                      <div className="h-full bg-gray-800 rounded flex items-center justify-center">
                         <span className="text-gray-500">
                           Sin imágenes disponibles
                         </span>
                       </div>
                     )}
-
-                    <div className="flex mb-4">
-                      <a className="flex-grow text-indigo-400 border-b-2 border-indigo-500 py-2 text-lg px-1">
-                        Descripción
-                      </a>
-                    </div>
-                    <p className="leading-relaxed mb-4">
-                      {producto.attributes.descripcion}
-                    </p>
-
-                    <div className="flex border-t border-gray-800 py-2">
-                      <span className="text-gray-500">Categoría</span>
-                      <span className="ml-auto text-white">
-                        {producto.attributes.categoria?.data?.attributes
-                          ?.nombre || "Sin categoría"}
-                      </span>
-                    </div>
-                    <div className="flex border-t border-gray-800 py-2">
-                      <span className="text-gray-500">Subcategoría</span>
-                      <span className="ml-auto text-white">
-                        {producto.attributes.subcategoria?.data?.attributes
-                          ?.nombre || "Sin subcategoría"}
-                      </span>
-                    </div>
-                    <div className="flex border-t border-b mb-6 border-gray-800 py-2">
-                      <span className="text-gray-500">Unidad</span>
-                      <span className="ml-auto text-white">
-                        {producto.attributes.unidadMedida}
-                      </span>
-                    </div>
-                    <div className="flex">
-                      <span className="title-font font-medium text-2xl text-white">
-                        {formatearPrecio(producto.attributes.precios)}
-                      </span>
-                    </div>
                   </div>
                 </div>
               </CarouselItem>

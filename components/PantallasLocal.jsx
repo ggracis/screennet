@@ -131,12 +131,17 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
     }
   };
 
-  const { componentes } = localPlantilla.attributes;
-  const fondoData = localPlantilla.attributes.fondo?.data?.attributes;
-  const fondoUrl = fondoData
-    ? `${process.env.NEXT_PUBLIC_STRAPI_URL}${fondoData.url}`
+  const { componentes, overlayOpacity = 50 } = localPlantilla.attributes;
+  const fondo1 = localPlantilla.attributes.fondo1;
+  const fondoUrl = fondo1?.startsWith("url(")
+    ? fondo1.replace(/^url\((.*)\)$/, "$1")
     : null;
-  const isFondoVideo = fondoData?.mime?.startsWith("video/");
+  const isFondoVideo =
+    fondoUrl && /(\.mp4|\.mov|\.avi|\.webm)$/i.test(fondoUrl);
+  const isFondoImage =
+    fondoUrl && /(\.jpg|\.jpeg|\.png|\.gif|\.webp)$/i.test(fondoUrl);
+  const isFondoStyle =
+    fondo1 && (fondo1.startsWith("linear-gradient") || fondo1.startsWith("#"));
 
   const calcularAlturaGrid = () => {
     const alturaTotal = `calc(100vh - ${headerHeight}px - ${footerHeight}px)`;
@@ -152,7 +157,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
   return (
     <div className={containerClasses}>
       {/* Fondo */}
-      {fondoUrl && (
+      {fondo1 && (
         <div className="fixed inset-0 -z-10">
           {isFondoVideo ? (
             <video
@@ -164,7 +169,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
               playsInline
               className="absolute inset-0 w-full h-full object-cover"
             />
-          ) : (
+          ) : isFondoImage ? (
             <Image
               src={fondoUrl}
               alt="Fondo"
@@ -174,8 +179,16 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
               sizes="100vw"
               quality={75}
             />
-          )}
-          <div className="absolute inset-0 bg-black/50" />{" "}
+          ) : isFondoStyle ? (
+            <div
+              className="absolute inset-0 w-full h-full"
+              style={{ background: fondo1 }}
+            />
+          ) : null}
+          <div
+            className="absolute inset-0 bg-black"
+            style={{ opacity: overlayOpacity / 100 }}
+          />
           {/* Overlay opcional */}
         </div>
       )}

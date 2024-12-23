@@ -30,6 +30,7 @@ export async function GET() {
       fondo: item.attributes?.fondo?.data?.attributes?.url
         ? `${process.env.NEXT_PUBLIC_STRAPI_URL}${item.attributes.fondo.data.attributes.url}`
         : null,
+      fondo1: item.attributes?.fondo1,
       /*  componentes: item.attributes?.componentes,
       createdAt: item.attributes?.createdAt,
       updatedAt: item.attributes?.updatedAt, */

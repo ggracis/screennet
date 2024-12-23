@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Paintbrush } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 export function GradientPicker({ background, setBackground, className }) {
   const solids = [
@@ -36,7 +36,6 @@ export function GradientPicker({ background, setBackground, className }) {
     "#D35400", // Naranja oscuro
     "#C0392B", // Rojo oscuro
     "#2980B9", // Azul oscuro
-    "#8E44AD", // Púrpura oscuro
     "#F39C12", // Amarillo oscuro
     "#2C3E50", // Gris oscuro
     "#34495E", // Gris azulado
@@ -120,6 +119,32 @@ export function GradientPicker({ background, setBackground, className }) {
     "url(https://images.unsplash.com/photo-1688822863426-8c5f9b257090?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2532&q=90)",
   ];
 
+  const [fondos, setFondos] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFondos();
+  }, []);
+
+  const fetchFondos = async () => {
+    try {
+      const response = await fetch("/api/fondos");
+      if (!response.ok) throw new Error("Error al cargar fondos");
+      const data = await response.json();
+      setFondos(data.fondos);
+    } catch (error) {
+      console.error("Error fetching fondos:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getFullUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http")) return url;
+    return `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`;
+  };
+
   const defaultTab = useMemo(() => {
     if (background && typeof background === "string") {
       if (background.includes("url")) return "image";
@@ -149,7 +174,9 @@ export function GradientPicker({ background, setBackground, className }) {
               <Paintbrush className="h-4 w-4" />
             )}
             <div className="truncate flex-1">
-              {background ? background : "Pick a color"}
+              {background
+                ? background.replace(/^url\(https:\/\/.*\/([^\/]+)\)$/, "$1")
+                : "Elegir color"}
             </div>
           </div>
         </Button>
@@ -164,7 +191,7 @@ export function GradientPicker({ background, setBackground, className }) {
               Gradientes
             </TabsTrigger>
             <TabsTrigger className="flex-1" value="image">
-              Imagenes
+              Multimedia
             </TabsTrigger>
           </TabsList>
           <TabsContent value="solid" className="flex flex-wrap gap-1 mt-0">
@@ -188,38 +215,40 @@ export function GradientPicker({ background, setBackground, className }) {
                 />
               ))}
             </div>
-            {/*  <GradientButton background={background}>
-              Get more at{" "}
-              <Link
-                href="https://gradient.page/ui-gradients"
-                className="hover:underline font-bold"
-                target="_blank"
-              >
-                Gradient Page
-              </Link>
-            </GradientButton> */}
           </TabsContent>
           <TabsContent value="image" className="mt-0">
-            <div className="grid grid-cols-2 gap-1 mb-2">
-              {images.map((s) => (
-                <div
-                  key={s}
-                  style={{ backgroundImage: s }}
-                  className="rounded-md bg-cover bg-center h-12 w-full cursor-pointer active:scale-105"
-                  onClick={() => setBackground(s)}
-                />
-              ))}
+            <div className="grid grid-cols-2 gap-1 mb-2 max-h-[30vh] overflow-y-auto">
+              {isLoading ? (
+                <div>Cargando fondos...</div>
+              ) : (
+                fondos.map((fondo) => (
+                  <div
+                    key={fondo.id}
+                    className="relative cursor-pointer rounded-md overflow-hidden"
+                    onClick={() =>
+                      setBackground(`url(${getFullUrl(fondo.url)})`)
+                    }
+                  >
+                    {fondo.mime.startsWith("video/") ? (
+                      <video
+                        src={getFullUrl(fondo.url)}
+                        className="w-full h-12 object-cover"
+                        muted
+                        loop
+                        autoPlay
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          backgroundImage: `url(${getFullUrl(fondo.url)})`,
+                        }}
+                        className="rounded-md bg-cover bg-center h-12 w-full cursor-pointer active:scale-105"
+                      />
+                    )}
+                  </div>
+                ))
+              )}
             </div>
-            {/*  <GradientButton background={background}>
-              Get abstract{" "}
-              <Link
-                href="https://gradient.page/wallpapers"
-                className="hover:underline font-bold"
-                target="_blank"
-              >
-                wallpapers
-              </Link>
-            </GradientButton> */}
           </TabsContent>
         </Tabs>
         <Input
@@ -235,13 +264,14 @@ export function GradientPicker({ background, setBackground, className }) {
 
 const GradientButton = ({ background, children }) => {
   return (
-    <div
-      className="p-0.5 rounded-md relative !bg-cover !bg-center transition-all"
-      style={{ background }}
-    >
+    <>
+      <div
+        className="p-0.5 rounded-md relative !bg-cover !bg-center transition-all"
+        style={{ background }}
+      ></div>
       <div className="bg-popover/80 rounded-md p-1 text-xs text-center">
         {children}
       </div>
-    </div>
+    </>
   );
 };

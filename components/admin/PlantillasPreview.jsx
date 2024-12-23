@@ -32,6 +32,7 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
           attributes: {
             ...plantilla.attributes,
             fondo: plantilla.attributes.fondo || null,
+            fondo1: plantilla.attributes.fondo1 || null,
             componentes: plantilla.attributes.componentes || {
               espacios: {},
               config_componentes: {},
@@ -121,12 +122,22 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
     }
   };
 
-  const { componentes, filas = 1, columnas = 1 } = plantilla.attributes;
-  const fondoData = plantilla.attributes.fondo?.data?.attributes;
-  const fondoUrl = fondoData
-    ? `${process.env.NEXT_PUBLIC_STRAPI_URL}${fondoData.url}`
+  const {
+    componentes,
+    filas = 1,
+    columnas = 1,
+    overlayOpacity = 50,
+  } = plantilla.attributes;
+  const fondo1 = plantilla.attributes.fondo1;
+  const fondoUrl = fondo1?.startsWith("url(")
+    ? fondo1.replace(/^url\((.*)\)$/, "$1")
     : null;
-  const isFondoVideo = fondoData?.mime?.startsWith("video/");
+  const isFondoVideo =
+    fondoUrl && /(\.mp4|\.mov|\.avi|\.webm)$/i.test(fondoUrl);
+  const isFondoImage =
+    fondoUrl && /(\.jpg|\.jpeg|\.png|\.gif|\.webp)$/i.test(fondoUrl);
+  const isFondoStyle =
+    fondo1 && (fondo1.startsWith("linear-gradient") || fondo1.startsWith("#"));
 
   const gridStyle = {
     display: "grid",
@@ -141,7 +152,7 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
   return (
     <div className="w-full h-screen relative overflow-hidden">
       {/* Fondo */}
-      {fondoUrl && (
+      {fondo1 && (
         <div className="fixed inset-0 -z-10">
           {isFondoVideo ? (
             <video
@@ -153,15 +164,27 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
               playsInline
               className="absolute inset-0 w-full h-full object-cover"
             />
-          ) : (
+          ) : isFondoImage ? (
             <Image
               src={fondoUrl}
               alt="Fondo"
-              fill
-              className="object-cover"
-              priority
+              fill={true}
+              className="absolute inset-0 w-full h-full object-cover"
+              priority={true}
+              sizes="100vw"
+              quality={75}
             />
-          )}
+          ) : isFondoStyle ? (
+            <div
+              className="absolute inset-0 w-full h-full"
+              style={{ background: fondo1 }}
+            />
+          ) : null}
+          <div
+            className="absolute inset-0 bg-black"
+            style={{ opacity: overlayOpacity / 100 }}
+          />
+          {/* Overlay opcional */}
         </div>
       )}
 

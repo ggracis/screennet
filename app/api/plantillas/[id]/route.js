@@ -52,6 +52,10 @@ export async function PUT(request, { params }) {
       };
     }
 
+    if (body.data.overlayOpacity) {
+      body.data.overlayOpacity = parseFloat(body.data.overlayOpacity);
+    }
+
     console.log(
       "3. Datos transformados a enviar a Strapi:",
       JSON.stringify(body, null, 2)

@@ -7,7 +7,7 @@ export async function generateMetadata({ params }) {
 }
 
 const Pantalla = ({ params }) => {
-  console.log("Page params:", params);
+  // console.log("Page params:", params);
 
   if (!params?.id) {
     return <div>Error: ID de pantalla no válido</div>;

@@ -154,6 +154,8 @@ const PantallasEditor = ({ isNewPantalla = false }) => {
     });
 
     if (response.ok) {
+      // Invalida la caché después de guardar los cambios
+      await fetch(`/api/invalidate-cache/pantallas/${id}`, { method: "POST" });
       router.push("/admin/pantallas");
     } else {
       toast({

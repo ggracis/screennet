@@ -17,8 +17,8 @@ import { Separator } from "@/components/ui/separator";
 import ProductosBuscador from "./ProductosBuscador";
 
 import { Card, CardContent } from "@/components/ui/card";
-import FondosSelector from "./FondosSelector";
 import PlantillasPreview from "./PlantillasPreview";
+import { GradientPicker } from "../ui/GradientPicker";
 
 const PlantillasEditor = ({ isNewPlantilla }) => {
   const router = useRouter();
@@ -49,6 +49,30 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   const [previewType, setPreviewType] = useState("image");
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewKey, setPreviewKey] = useState(0);
+  const [fondo1, setFondo1] = useState("");
+  const [overlayOpacity, setOverlayOpacity] = useState(50);
+
+  const determineMediaType = (url) => {
+    if (!url) return null;
+    const cleanUrl = url.replace(/^url\((.*)\)$/, "$1");
+    console.log("Clean URL:", cleanUrl);
+
+    if (/(\.mp4|\.mov|\.avi|\.webm)$/i.test(cleanUrl)) {
+      console.log("Detected as video");
+      return "video";
+    } else if (/(\.jpg|\.jpeg|\.png|\.gif|\.webp)$/i.test(cleanUrl)) {
+      console.log("Detected as image");
+      return "image";
+    } else if (url.startsWith("linear-gradient")) {
+      console.log("Detected as style");
+      return "style";
+    } else if (url.startsWith("#")) {
+      console.log("Detected as style");
+      return "style";
+    }
+    console.log("Defaulting to image");
+    return "image";
+  };
 
   useEffect(() => {
     const initializeData = async () => {
@@ -71,6 +95,25 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   }, [plantilla]);
 
   useEffect(() => {
+    if (plantilla && typeof plantilla.fondo1 === "string") {
+      console.log("Effect 1 - plantilla changed:", plantilla.fondo1);
+      setFondo1(plantilla.fondo1);
+      const mediaType = determineMediaType(plantilla.fondo1);
+      console.log("Effect 1 - Setting preview type to:", mediaType);
+      setPreviewType(mediaType);
+    }
+  }, [plantilla]);
+
+  useEffect(() => {
+    if (fondo1) {
+      console.log("Effect 2 - fondo1 changed:", fondo1);
+      const mediaType = determineMediaType(fondo1);
+      console.log("Effect 2 - Setting preview type to:", mediaType);
+      setPreviewType(mediaType);
+    }
+  }, [fondo1]);
+
+  useEffect(() => {
     if (id) {
       fetchComponentes();
     }
@@ -91,6 +134,20 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         setColumnas(plantillaData.columnas);
         setFilas(plantillaData.filas);
 
+        // Manejar fondo1
+        if (plantillaData.fondo1) {
+          setFondo1(plantillaData.fondo1);
+          const cleanUrl = plantillaData.fondo1.replace(/^url\((.*)\)$/, "$1");
+          const isVideo = /(\.mp4|\.mov|\.avi)$/i.test(cleanUrl);
+          setPreviewType(
+            isVideo
+              ? "video"
+              : plantillaData.fondo1.startsWith("linear-gradient")
+              ? "style"
+              : "image"
+          );
+        }
+
         // Manejar imagen
         const imagenUrl = plantillaData.imagen?.data?.attributes?.url;
         if (imagenUrl) {
@@ -103,9 +160,8 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
           const fondoUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${fondoData.url}`;
           setFondo(fondoUrl);
           setSelectedImage(fondoUrl);
-          // Determinar tipo basado en el MIME type
           setPreviewType(
-            fondoData.mime.startsWith("video/") ? "video" : "image"
+            fondoData.mime?.startsWith("video/") ? "video" : "image"
           );
         }
 
@@ -115,6 +171,7 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         setConfigComponentes(
           plantillaData.componentes?.config_componentes || {}
         );
+        setOverlayOpacity(plantillaData.overlayOpacity || 50);
       } else {
         throw new Error("Datos de plantilla no encontrados");
       }
@@ -208,6 +265,7 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
     const MAX_SIZE = MAX_SIZE_MB * 1024 * 1024;
 
     if (file) {
+      console.log("handleFileChange - File type:", file.type);
       if (file.size > MAX_SIZE) {
         toast({
           variant: "destructive",
@@ -245,7 +303,10 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
           setImagenPreview(fullUrl);
         } else {
           setSelectedImage(fullUrl);
-          setPreviewType(file.type.startsWith("video/") ? "video" : "image");
+          setFondo1(fullUrl);
+          const mediaType = file.type.startsWith("video/") ? "video" : "image";
+          console.log("handleFileChange - Setting preview type to:", mediaType);
+          setPreviewType(mediaType);
         }
 
         // Actualizar el estado de la plantilla
@@ -273,25 +334,13 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   };
 
   const handleFondoSelect = (fondo) => {
-    console.log("Fondo seleccionado:", fondo);
-
-    const fullUrl = `${process.env.NEXT_PUBLIC_STRAPI_URL}${fondo.url}`;
-    setSelectedImage(fullUrl);
-    setPreviewType(fondo.mime.startsWith("video/") ? "video" : "image");
-
-    // Actualizar el estado completo de la plantilla
-    setPlantilla((prev) => ({
-      ...prev,
-      fondo: {
-        data: {
-          id: fondo.id,
-          attributes: {
-            url: fondo.url,
-            mime: fondo.mime,
-          },
-        },
-      },
-    }));
+    console.log("handleFondoSelect called with:", fondo);
+    setSelectedImage(fondo);
+    setFondo(fondo);
+    setFondo1(fondo);
+    const mediaType = determineMediaType(fondo);
+    console.log("handleFondoSelect - Setting preview type to:", mediaType);
+    setPreviewType(mediaType);
   };
 
   const renderComponenteSelects = () => {
@@ -676,6 +725,8 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         descripcion,
         columnas: parseInt(columnas),
         filas: parseInt(filas),
+        fondo1,
+        overlayOpacity,
         componentes: {
           header: headerComponente,
           footer: footerComponente,
@@ -845,10 +896,11 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
             <Label className="block mb-2">Vista previa:</Label>
             <div
               className="relative w-full overflow-hidden"
-              style={{ height: "600px" }}
+              style={{ paddingTop: "56.25%" }} // 16:9 aspect ratio
             >
-              <div className="origin-top-left w-[225%] transform scale-[0.45]">
+              <div className="absolute top-0 left-0 w-full h-full">
                 <PlantillasPreview
+                  key={previewKey}
                   plantillaId={id}
                   plantillaData={
                     isNewPlantilla
@@ -878,6 +930,8 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
                                   },
                                 }
                               : null,
+                            fondo1,
+                            overlayOpacity,
                           },
                         }
                       : null
@@ -889,24 +943,37 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
 
           <div className="w-1/3">
             <Label className="block mb-2">Fondo:</Label>
+
+            <GradientPicker
+              background={fondo1}
+              setBackground={handleFondoSelect}
+              className="w-full"
+            />
             <Card className="mb-4">
-              <CardContent className="relative w-full h-[300px] p-0 overflow-hidden">
+              <CardContent
+                className="relative w-full h-[300px] p-0 overflow-hidden "
+                style={{
+                  background: previewType === "style" ? fondo1 : "transparent",
+                }}
+              >
+                {/* Aquí se muestra la imagen o video de fondo */}
                 {previewType === "image" ? (
                   <img
-                    src={selectedImage || "/placeholder-image.jpg"}
+                    src={fondo1.replace(/^url\((.*)\)$/, "$1")}
                     alt="Fondo de la plantilla"
                     className="w-full h-full object-cover"
                   />
-                ) : (
+                ) : previewType === "video" ? (
                   <video
-                    key={selectedImage}
-                    src={selectedImage}
+                    key={fondo1.replace(/^url\((.*)\)$/, "$1")}
+                    src={fondo1.replace(/^url\((.*)\)$/, "$1")}
                     autoPlay
                     loop
                     muted
+                    playsInline
                     className="w-full h-full object-cover"
                   />
-                )}
+                ) : null}
               </CardContent>
             </Card>
             <div className="grid w-full items-center gap-1.5">
@@ -918,15 +985,23 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
                   onChange={handleFileChange}
                   className="mt-2 w-full bg-gray-900/50"
                 />
-                <FondosSelector
-                  onSelect={handleFondoSelect}
-                  selectedFondo={selectedImage}
-                />
               </div>
               <p className="text-sm text-muted-foreground">
                 Sube una imagen o video (máx. 20MB) o selecciona uno de la
                 biblioteca
               </p>
+            </div>
+            <div className="mt-4">
+              <Label className="block mb-2">Overlay Opacity:</Label>
+              <Input
+                type="range"
+                min="0"
+                max="100"
+                value={overlayOpacity}
+                onChange={(e) => setOverlayOpacity(parseInt(e.target.value))}
+                className="w-full"
+              />
+              <p className="text-sm text-muted-foreground">{overlayOpacity}%</p>
             </div>
           </div>
         </div>
