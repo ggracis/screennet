@@ -41,7 +41,7 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
   - [❌] Modo pantalla completa
   - [❌] Transiciones entre contenidos
   - [❌] Poder elegir modo claro o oscuro
-  - [❌] Mostrar vista previa de cada componente, puede ser con react-tooltip
+  - [✔️] Mostrar vista previa de cada componente (resuelto con un popover)
 
 ### Modulos
  
@@ -58,7 +58,7 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
 - [✔️] Generar dinámicamente JPG de vista previa de pantallas, plantillas y modulos > Se resolvió mostrando el componente
 - [❌] Podemos usar Framer Motion para animar el cambio de contenido
 - [❌] Podemos usar driver.js para mostrar un tutorial de uso de la aplicación
-
+- [❌] Demasiadas peticiones a la API local, se puede mejorar con un sistema de caché
   
 ### Analíticas y Reportes
 - [❌] Dashboard con estadísticas de uso
