@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import MarqueeSocial from "../MarqueeSocial";
 import Image from "next/image";
+import MarqueeSocial from "@/components/MarqueeSocial";
 
-const Header = () => {
+const Header1 = () => {
   const params = useParams();
   const [local, setLocal] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,16 +12,19 @@ const Header = () => {
   useEffect(() => {
     const fetchLocalData = async () => {
       try {
-        // Obtenemos los datos de la pantalla usando el ID de los params
+        /*   // Obtenemos los datos de la pantalla usando el ID de los params
+        console.log("Cargando datos de la pantalla:", params.id);
         const pantallaRes = await fetch(`/api/pantallas/${params.id}`);
         const { pantalla } = await pantallaRes.json();
-
+        console.log("Datos de la pantalla:", pantalla);
         const localId = pantalla.attributes.local.data.id;
+        console.log("ID de local:", localId);
 
         if (!localId) {
           throw new Error("ID de local no encontrado en la pantalla");
         }
-
+ */
+        const localId = 1;
         const localRes = await fetch(`/api/locals/${localId}`);
         if (!localRes.ok) {
           throw new Error(`Error HTTP: ${localRes.status}`);
@@ -117,4 +120,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default Header1;

@@ -1,3 +1,4 @@
+import withMDX from "@next/mdx";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -9,26 +10,28 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   webpack: (config) => {
-    config.resolve.alias["@"] = path.resolve(__dirname);
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@": path.resolve(__dirname),
+    };
+
     return config;
   },
   images: {
     remotePatterns: [
       {
-        protocol: "http",
-        hostname: "screen.net.ar",
-      },
-      {
         protocol: "https",
         hostname: "screen.net.ar",
+        port: "",
+        pathname: "/**",
       },
     ],
   },
-  serverRuntimeConfig: {
-    bodyParser: {
-      sizeLimit: "20mb",
-    },
-  },
 };
 
-export default nextConfig;
+export default withMDX({
+  extension: /\.mdx?$/,
+  options: {
+    providerImportSource: "@mdx-js/react",
+  },
+})(nextConfig);

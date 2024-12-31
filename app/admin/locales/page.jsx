@@ -1,11 +1,6 @@
 import HeaderSection from "@/components/admin/HeaderSection";
 import { LocalEditor } from "@/components/admin/LocalEditor";
 
-export async function generateMetadata() {
-  return {
-    title: `ScreenNet - Configuración del Local`,
-  };
-}
 const ListOfProducts = async () => {
   return (
     <main>

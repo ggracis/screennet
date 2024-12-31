@@ -15,6 +15,7 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
     cleanup: cleanupProducts,
     fetchAllProducts,
   } = useProductStore();
+  const cache = {};
 
   useEffect(() => {
     const fetchPlantilla = async () => {
@@ -25,15 +26,19 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
 
       try {
         const response = await fetch(`/api/plantillas/${plantillaId}`);
-        const { plantilla } = await response.json();
+        const data = await response.json();
+
+        if (!data || !data.id) {
+          throw new Error("Datos de plantilla no encontrados");
+        }
 
         const plantillaFormateada = {
-          id: plantilla.id,
+          id: data.id,
           attributes: {
-            ...plantilla.attributes,
-            fondo: plantilla.attributes.fondo || null,
-            fondo1: plantilla.attributes.fondo1 || null,
-            componentes: plantilla.attributes.componentes || {
+            ...data.attributes,
+            fondo: data.attributes.fondo || null,
+            fondo1: data.attributes.fondo1 || null,
+            componentes: data.attributes.componentes || {
               espacios: {},
               config_componentes: {},
               header: null,
@@ -83,24 +88,31 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
     </div>
   );
 
-  const cargarComponente = async (nombreComponente) => {
-    if (componentesCache[nombreComponente]) {
-      return componentesCache[nombreComponente];
+  const cargarComponente = async (idComponente) => {
+    if (cache[idComponente]) {
+      return cache[idComponente];
+    }
+
+    if (componentesCache[idComponente]) {
+      return componentesCache[idComponente];
     }
 
     try {
+      const response = await fetch(`/api/componentes/${idComponente}`);
+      const { ruta } = await response.json();
+
       const Componente = dynamic(
         () =>
-          import(`@/components/screen/${nombreComponente}`).catch(() => {
-            console.error(`Componente ${nombreComponente} no encontrado`);
+          import(`@/components/screen/${ruta}`).catch(() => {
+            console.error(`Componente ${ruta} no encontrado`);
             return Promise.resolve(() => (
-              <ComponenteNoEncontrado nombreComponente={nombreComponente} />
+              <ComponenteNoEncontrado nombreComponente={ruta} />
             ));
           }),
         {
           loading: () => (
             <div className="animate-pulse bg-gray-200 rounded-lg p-4">
-              Cargando componente {nombreComponente}...
+              Cargando componente {ruta}...
             </div>
           ),
         }
@@ -108,17 +120,13 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
 
       setComponentesCache((prev) => ({
         ...prev,
-        [nombreComponente]: Componente,
+        [idComponente]: Componente,
       }));
+      cache[idComponente] = Componente;
       return Componente;
     } catch (error) {
-      console.error(
-        `Error al cargar el componente ${nombreComponente}:`,
-        error
-      );
-      return () => (
-        <ComponenteNoEncontrado nombreComponente={nombreComponente} />
-      );
+      console.error(`Error al cargar el componente ${idComponente}:`, error);
+      return () => <ComponenteNoEncontrado nombreComponente={idComponente} />;
     }
   };
 
@@ -192,7 +200,7 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
       {componentes.header && (
         <Suspense fallback={<div>Cargando header...</div>}>
           <DynamicComponent
-            nombreComponente={componentes.header}
+            idComponente={componentes.header}
             cargarComponente={cargarComponente}
             config={componentes.config_componentes?.header}
           />
@@ -202,10 +210,10 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
       {/* Grid de componentes */}
       <div style={gridStyle}>
         {Object.entries(componentes.espacios || {}).map(
-          ([espacio, nombreComponente]) => (
+          ([espacio, idComponente]) => (
             <Suspense key={espacio} fallback={<div>Cargando...</div>}>
               <DynamicComponent
-                nombreComponente={nombreComponente}
+                idComponente={idComponente}
                 cargarComponente={cargarComponente}
                 config={componentes.config_componentes?.[espacio]}
               />
@@ -218,7 +226,7 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
       {componentes.footer && (
         <Suspense fallback={<div>Cargando footer...</div>}>
           <DynamicComponent
-            nombreComponente={componentes.footer}
+            idComponente={componentes.footer}
             cargarComponente={cargarComponente}
             config={componentes.config_componentes?.footer}
           />
@@ -228,28 +236,23 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
   );
 };
 
-const DynamicComponent = ({
-  nombreComponente,
-  cargarComponente,
-  config = {},
-}) => {
+const DynamicComponent = ({ idComponente, cargarComponente, config = {} }) => {
   const [Componente, setComponente] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const cargar = async () => {
       try {
-        const ComponenteCargado = await cargarComponente(nombreComponente);
+        const ComponenteCargado = await cargarComponente(idComponente);
         setComponente(() => ComponenteCargado);
       } catch (err) {
         setError(err);
       }
     };
     cargar();
-  }, [nombreComponente, cargarComponente]);
+  }, [idComponente, cargarComponente]);
 
-  if (error)
-    return <ComponenteNoEncontrado nombreComponente={nombreComponente} />;
+  if (error) return <ComponenteNoEncontrado nombreComponente={idComponente} />;
   if (!Componente) return null;
 
   return <Componente {...config} />;

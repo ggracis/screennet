@@ -1,3 +1,4 @@
+//components\screen\lista-de-productos\Galeria1.jsx
 "use client";
 
 import {
@@ -10,7 +11,7 @@ import useProductStore from "@/stores/useProductStore";
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 
-const GranProducto1 = ({ productos: productosIds = [] }) => {
+const Galeria1 = ({ productos: productosIds = [] }) => {
   const { products, fetchProductsByIds } = useProductStore();
   const [filteredProducts, setFilteredProducts] = useState([]);
 
@@ -183,4 +184,4 @@ const GranProducto1 = ({ productos: productosIds = [] }) => {
   );
 };
 
-export default GranProducto1;
+export default Galeria1;

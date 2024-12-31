@@ -1,10 +1,5 @@
 import HeaderSection from "@/components/admin/HeaderSection";
 
-export async function generateMetadata() {
-  return {
-    title: `ScreenNet - Preferencias`,
-  };
-}
 const Preferencias = async () => {
   return (
     <main>

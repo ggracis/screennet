@@ -4,11 +4,6 @@ import { Button } from "@/components/ui/button";
 import { SquarePlusIcon } from "lucide-react";
 import Link from "next/link";
 
-export async function generateMetadata() {
-  return {
-    title: `ScreenNet - Listado de plantillas`,
-  };
-}
 const Plantillas = async () => {
   return (
     <main>

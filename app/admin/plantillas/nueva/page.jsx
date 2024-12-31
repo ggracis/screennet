@@ -1,11 +1,5 @@
 import PlantillasEditor from "@/components/admin/PlantillasEditor";
 
-export async function generateMetadata() {
-  return {
-    title: `ScreenNet - Crear nueva plantilla`,
-  };
-}
-
 const NuevaPlantilla = () => {
   return (
     <>

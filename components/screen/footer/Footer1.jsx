@@ -11,11 +11,12 @@ const Footer1 = () => {
     const fetchLocalData = async () => {
       try {
         // Obtenemos los datos de la pantalla usando el ID de los params
-        const pantallaRes = await fetch(`/api/pantallas/${params.id}`);
+        /* const pantallaRes = await fetch(`/api/pantallas/${params.id}`);
         const { pantalla } = await pantallaRes.json();
 
         const localId = pantalla.attributes.local.data.id;
-
+ */
+        const localId = 1;
         if (!localId) {
           throw new Error("ID de local no encontrado en la pantalla");
         }

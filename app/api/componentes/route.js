@@ -3,12 +3,15 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const res = await fetch(`${process.env.STRAPI_API_URL}/componentes`, {
-      headers: {
-        Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
-      },
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(
+      `${process.env.STRAPI_API_URL}/componentes?populate=*`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+        },
+        next: { revalidate: 60 },
+      }
+    );
 
     if (!res.ok) {
       throw new Error(`Error al obtener componentes: ${res.statusText}`);

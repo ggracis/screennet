@@ -1,11 +1,6 @@
 import HeaderSection from "@/components/admin/HeaderSection";
 import ProductosLista from "@/components/admin/ProductosLista";
 
-export async function generateMetadata() {
-  return {
-    title: `ScreenNet - Lista de Productos`,
-  };
-}
 const ListOfProducts = async () => {
   return (
     <main>

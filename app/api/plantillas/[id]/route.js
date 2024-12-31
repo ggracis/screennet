@@ -26,7 +26,18 @@ export async function GET(request, { params }) {
     const plantillaData = await plantillaResponse.json();
     console.log(`Datos de la plantilla obtenidos:`, plantillaData);
 
-    return NextResponse.json({ plantilla: plantillaData.data });
+    // Asegurarse de que componentes sea un objeto con las propiedades esperadas
+    const componentes = plantillaData.data.attributes.componentes || {
+      header: null,
+      footer: null,
+      espacios: {},
+      config_componentes: {},
+    };
+
+    return NextResponse.json({
+      ...plantillaData.data,
+      attributes: { ...plantillaData.data.attributes, componentes },
+    });
   } catch (error) {
     console.error("Error en la obtención de datos de la plantilla:", error);
     return NextResponse.json(

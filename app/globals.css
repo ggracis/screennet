@@ -107,3 +107,8 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Asegura que los portales de Radix UI tengan el z-index correcto */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}

@@ -14,6 +14,8 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
   const [componentesCache, setComponentesCache] = useState({});
   const [headerHeight, setHeaderHeight] = useState(0);
   const [footerHeight, setFooterHeight] = useState(0);
+  const [componentes, setComponentes] = useState([]);
+  const cache = {};
 
   const {
     initializePolling,
@@ -74,6 +76,20 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
     cleanupProducts,
   ]);
 
+  useEffect(() => {
+    const fetchComponentes = async () => {
+      try {
+        const response = await fetch(`/api/componentes`);
+        const data = await response.json();
+        setComponentes(data.data || []);
+      } catch (error) {
+        console.error("Error fetching componentes:", error);
+      }
+    };
+
+    fetchComponentes();
+  }, []);
+
   if (loading) {
     return <div>Cargando...</div>;
   }
@@ -92,24 +108,31 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
     </div>
   );
 
-  const cargarComponente = async (nombreComponente) => {
-    if (componentesCache[nombreComponente]) {
-      return componentesCache[nombreComponente];
+  const cargarComponente = async (idComponente) => {
+    if (cache[idComponente]) {
+      return cache[idComponente];
+    }
+
+    if (componentesCache[idComponente]) {
+      return componentesCache[idComponente];
     }
 
     try {
+      const response = await fetch(`/api/componentes/${idComponente}`);
+      const { ruta } = await response.json();
+
       const Componente = dynamic(
         () =>
-          import(`@/components/screen/${nombreComponente}`).catch(() => {
-            console.error(`Componente ${nombreComponente} no encontrado`);
+          import(`@/components/screen/${ruta}`).catch(() => {
+            console.error(`Componente ${ruta} no encontrado`);
             return Promise.resolve(() => (
-              <ComponenteNoEncontrado nombreComponente={nombreComponente} />
+              <ComponenteNoEncontrado nombreComponente={ruta} />
             ));
           }),
         {
           loading: () => (
             <div className="animate-pulse bg-gray-200 rounded-lg p-4">
-              Cargando componente {nombreComponente}...
+              Cargando componente {ruta}...
             </div>
           ),
         }
@@ -117,21 +140,18 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
 
       setComponentesCache((prev) => ({
         ...prev,
-        [nombreComponente]: Componente,
+        [idComponente]: Componente,
       }));
+      cache[idComponente] = Componente;
       return Componente;
     } catch (error) {
-      console.error(
-        `Error al cargar el componente ${nombreComponente}:`,
-        error
-      );
-      return () => (
-        <ComponenteNoEncontrado nombreComponente={nombreComponente} />
-      );
+      console.error(`Error al cargar el componente ${idComponente}:`, error);
+      return () => <ComponenteNoEncontrado nombreComponente={idComponente} />;
     }
   };
 
-  const { componentes, overlayOpacity = 50 } = localPlantilla.attributes;
+  const { componentes: plantillaComponentes, overlayOpacity = 50 } =
+    localPlantilla.attributes;
   const fondo1 = localPlantilla.attributes.fondo1;
   const fondoUrl = fondo1?.startsWith("url(")
     ? fondo1.replace(/^url\((.*)\)$/, "$1")
@@ -196,7 +216,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
       {/* Contenido */}
       <div className="relative z-10 flex flex-col h-full">
         {/* Header con ref para medir */}
-        {componentes.header && (
+        {plantillaComponentes.header && (
           <div ref={(el) => el && setHeaderHeight(el.offsetHeight)}>
             <Suspense
               fallback={
@@ -205,8 +225,8 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
                 </div>
               }
             >
-              <ComponenteWrapper
-                nombreComponente={componentes.header}
+              <DynamicComponent
+                idComponente={plantillaComponentes.header}
                 cargarComponente={cargarComponente}
               />
             </Suspense>
@@ -221,35 +241,37 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
             gridTemplateRows: `repeat(${localPlantilla.attributes.filas}, 1fr)`,
           }}
         >
-          {Object.entries(componentes.espacios).map(([espacio, componente]) => {
-            const config = componentes.config_componentes[espacio];
-            return (
-              <Suspense
-                key={espacio}
-                fallback={
-                  <div className="animate-pulse bg-gray-200 rounded-lg p-4">
-                    Cargando...
-                  </div>
-                }
-              >
-                <div
-                  style={{
-                    gridRow: `span ${config.rowSpan || 1}`,
-                    gridColumn: `span ${config.colSpan || 1}`,
-                  }}
+          {Object.entries(plantillaComponentes.espacios).map(
+            ([espacio, idComponente]) => {
+              const config = plantillaComponentes.config_componentes[espacio];
+              return (
+                <Suspense
+                  key={espacio}
+                  fallback={
+                    <div className="animate-pulse bg-gray-200 rounded-lg p-4">
+                      Cargando...
+                    </div>
+                  }
                 >
-                  <ComponenteWrapper
-                    nombreComponente={componente}
-                    cargarComponente={cargarComponente}
-                    props={{
-                      ...config,
-                      data: config.data || config.titulo,
+                  <div
+                    style={{
+                      gridRow: `span ${config?.rowSpan || 1}`,
+                      gridColumn: `span ${config?.colSpan || 1}`,
                     }}
-                  />
-                </div>
-              </Suspense>
-            );
-          })}
+                  >
+                    <DynamicComponent
+                      idComponente={idComponente}
+                      cargarComponente={cargarComponente}
+                      config={{
+                        ...config,
+                        data: config?.data || config?.titulo,
+                      }}
+                    />
+                  </div>
+                </Suspense>
+              );
+            }
+          )}
         </div>
 
         {/* Footer con ref para medir */}
@@ -257,7 +279,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
           className="fixed bottom-0 w-full z-10"
           ref={(el) => el && setFooterHeight(el?.offsetHeight || 0)}
         >
-          {componentes.footer && (
+          {plantillaComponentes.footer && (
             <Suspense
               fallback={
                 <div className="animate-pulse bg-gray-200 h-16">
@@ -265,10 +287,10 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
                 </div>
               }
             >
-              <ComponenteWrapper
-                nombreComponente={componentes.footer}
+              <DynamicComponent
+                idComponente={plantillaComponentes.footer}
                 cargarComponente={cargarComponente}
-                props={{
+                config={{
                   localId: localPantalla?.attributes?.local?.data?.id,
                 }}
               />
@@ -280,31 +302,26 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
   );
 };
 
-const ComponenteWrapper = ({
-  nombreComponente,
-  cargarComponente,
-  props = {},
-}) => {
+const DynamicComponent = ({ idComponente, cargarComponente, config = {} }) => {
   const [Componente, setComponente] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const cargar = async () => {
       try {
-        const ComponenteCargado = await cargarComponente(nombreComponente);
+        const ComponenteCargado = await cargarComponente(idComponente);
         setComponente(() => ComponenteCargado);
       } catch (err) {
         setError(err);
       }
     };
     cargar();
-  }, [nombreComponente, cargarComponente]);
+  }, [idComponente, cargarComponente]);
 
-  if (error)
-    return <ComponenteNoEncontrado nombreComponente={nombreComponente} />;
+  if (error) return <ComponenteNoEncontrado nombreComponente={idComponente} />;
   if (!Componente) return null;
 
-  return <Componente {...props} />;
+  return <Componente {...config} />;
 };
 
 export default PantallasLocal;

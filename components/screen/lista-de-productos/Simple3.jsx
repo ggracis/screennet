@@ -1,8 +1,8 @@
 import { memo, useMemo } from "react";
 import { useProducts } from "@/hooks/useProducts";
-import { ProductCard } from "./ProductCard";
+import { ProductCard } from "../ProductCard";
 
-const Componente3 = memo(({ productos, titulo, rowSpan = 1 }) => {
+const Simple3 = memo(({ productos, titulo, rowSpan = 1 }) => {
   const { loading, error, products } = useProducts(productos);
   const baseItemsPerPage = 5;
   const adjustedItemsPerPage = baseItemsPerPage * rowSpan;
@@ -49,6 +49,6 @@ const Componente3 = memo(({ productos, titulo, rowSpan = 1 }) => {
   );
 });
 
-Componente3.displayName = "Componente3";
+Simple3.displayName = "Simple3";
 
-export default Componente3;
+export default Simple3;

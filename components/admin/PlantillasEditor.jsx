@@ -1,24 +1,21 @@
 "use client";
 import { useRouter, useParams } from "next/navigation";
-import React, { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
+import React, { useEffect, useState, useCallback, Suspense } from "react";
+
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Separator } from "@/components/ui/separator";
 import ProductosBuscador from "./ProductosBuscador";
 
 import { Card, CardContent } from "@/components/ui/card";
 import PlantillasPreview from "./PlantillasPreview";
 import { GradientPicker } from "../ui/GradientPicker";
+
+import dynamic from "next/dynamic";
+import ComponenteSelector from "./ComponenteSelector";
 
 const PlantillasEditor = ({ isNewPlantilla }) => {
   const router = useRouter();
@@ -51,6 +48,9 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   const [previewKey, setPreviewKey] = useState(0);
   const [fondo1, setFondo1] = useState("");
   const [overlayOpacity, setOverlayOpacity] = useState(50);
+  const [componentesCache, setComponentesCache] = useState({});
+  const [selectedHeader, setSelectedHeader] = useState(null);
+  const [selectedFooter, setSelectedFooter] = useState(null);
 
   const determineMediaType = (url) => {
     if (!url) return null;
@@ -96,19 +96,15 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
 
   useEffect(() => {
     if (plantilla && typeof plantilla.fondo1 === "string") {
-      console.log("Effect 1 - plantilla changed:", plantilla.fondo1);
       setFondo1(plantilla.fondo1);
       const mediaType = determineMediaType(plantilla.fondo1);
-      console.log("Effect 1 - Setting preview type to:", mediaType);
       setPreviewType(mediaType);
     }
   }, [plantilla]);
 
   useEffect(() => {
     if (fondo1) {
-      console.log("Effect 2 - fondo1 changed:", fondo1);
       const mediaType = determineMediaType(fondo1);
-      console.log("Effect 2 - Setting preview type to:", mediaType);
       setPreviewType(mediaType);
     }
   }, [fondo1]);
@@ -126,8 +122,9 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      if (data.plantilla) {
-        const plantillaData = data.plantilla.attributes;
+      console.log("Datos de plantilla:", data);
+      if (data.id) {
+        const plantillaData = data.attributes;
         setPlantilla(plantillaData);
         setNombre(plantillaData.nombre);
         setDescripcion(plantillaData.descripcion);
@@ -172,6 +169,16 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
           plantillaData.componentes?.config_componentes || {}
         );
         setOverlayOpacity(plantillaData.overlayOpacity || 50);
+
+        // Establecer componentes seleccionados
+        const headerComp = componentes.find(
+          (c) => c.id === plantillaData.componentes?.header
+        );
+        const footerComp = componentes.find(
+          (c) => c.id === plantillaData.componentes?.footer
+        );
+        setSelectedHeader(headerComp || null);
+        setSelectedFooter(footerComp || null);
       } else {
         throw new Error("Datos de plantilla no encontrados");
       }
@@ -205,8 +212,10 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   };
 
   const handleComponenteChange = (index, value) => {
-    setEspacios((prev) => ({ ...prev, [index]: value }));
-    if (!configComponentes[index]) {
+    // Almacenar solo el ID del componente en espacios
+    setEspacios((prev) => ({ ...prev, [index]: value?.id || null }));
+
+    if (!configComponentes[index] && value) {
       setConfigComponentes((prev) => ({
         ...prev,
         [index]: { productos: [], titulo: `Productos ${index}` },
@@ -343,6 +352,75 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
     setPreviewType(mediaType);
   };
 
+  const cargarComponente = async (idComponente) => {
+    const componenteInfo = componentes.find((c) => c.id === idComponente);
+    if (!componenteInfo) {
+      return () => (
+        <div className="rounded-lg p-4 shadow-lg bg-gray-500/[.06] text-red-600">
+          Componente no encontrado: <strong>Desconocido</strong>
+        </div>
+      );
+    }
+
+    let rutaComponente = componenteInfo.attributes.ruta;
+
+    // Normalizar la ruta para importación dinámica
+    rutaComponente = rutaComponente
+      .replace(/^@\//, "") // Eliminar @/ del inicio
+      .replace(/^\//, "") // Eliminar / del inicio
+      .replace(/\.jsx$/, ""); // Eliminar extensión .jsx si existe
+
+    console.log(`Cargando componente: ${rutaComponente}`);
+    // Construir ruta relativa desde la raíz del proyecto
+    const fullPath = `@/components/screen/${rutaComponente}`;
+    console.log(`Ruta completa: ${fullPath}`);
+
+    if (componentesCache[rutaComponente]) {
+      console.log(`Usando componente en caché: ${rutaComponente}`);
+      return componentesCache[rutaComponente];
+    }
+
+    try {
+      console.log(`Intentando cargar el módulo: ${fullPath}`);
+      const Componente = dynamic(
+        () =>
+          import(fullPath).catch((error) => {
+            console.error(`Error cargando ${rutaComponente}:`, error);
+            return Promise.resolve(() => (
+              <div className="rounded-lg p-4 shadow-lg bg-gray-500/[.06] text-red-600">
+                Componente no encontrado:{" "}
+                <strong>{componenteInfo.attributes.nombre}</strong>
+              </div>
+            ));
+          }),
+        {
+          loading: () => (
+            <div className="animate-pulse bg-gray-200 rounded-lg p-4">
+              Cargando componente {componenteInfo.attributes.nombre}...
+            </div>
+          ),
+        }
+      );
+
+      setComponentesCache((prev) => ({
+        ...prev,
+        [rutaComponente]: Componente,
+      }));
+      console.log(
+        `Componente cargado y almacenado en caché: ${rutaComponente}`
+      );
+      return Componente;
+    } catch (error) {
+      console.error(`Error al cargar el componente ${rutaComponente}:`, error);
+      return () => (
+        <div className="rounded-lg p-4 shadow-lg bg-gray-500/[.06] text-red-600">
+          Componente no encontrado:{" "}
+          <strong>{componenteInfo.attributes.nombre}</strong>
+        </div>
+      );
+    }
+  };
+
   const renderComponenteSelects = () => {
     const componentesOptions = componentes.filter(
       (c) =>
@@ -355,26 +433,16 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         {Array.from({ length: filas * columnas }, (_, index) => (
           <div key={index} className="p-4 bg-gray-500/[.06] rounded-lg">
             <div className="flex gap-4 mb-4">
-              <Select
+              <ComponenteSelector
+                componentes={componentesOptions}
+                categorias={componentesOptions.map(
+                  (c) => c.attributes.categoria
+                )}
                 onValueChange={(value) =>
                   handleComponenteChange(index + 1, value)
                 }
                 value={espacios[index + 1] || ""}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={`Componente ${index + 1}`} />
-                </SelectTrigger>
-                <SelectContent>
-                  {componentesOptions.map((componente) => (
-                    <SelectItem
-                      key={componente.id}
-                      value={componente.attributes.nombre}
-                    >
-                      {componente.attributes.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             {espacios[index + 1] && (
@@ -413,27 +481,7 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
                     />
                   </div>
                 </div>
-                <div>
-                  <Label>Título:</Label>
-                  <Input
-                    type="text"
-                    value={configComponentes[index + 1]?.titulo || ""}
-                    onChange={(e) =>
-                      handleConfigChange(index + 1, "titulo", e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Productos:</Label>
-                  <ProductosBuscador
-                    selectedProducts={
-                      configComponentes[index + 1]?.productos || []
-                    }
-                    onChange={(productos) =>
-                      handleConfigChange(index + 1, "productos", productos)
-                    }
-                  />
-                </div>
+                {renderComponenteConfig(index + 1, espacios[index + 1])}
               </div>
             )}
           </div>
@@ -454,6 +502,10 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
     const espacioNum = index + 1;
     const productCount = config?.productos?.length || 0;
 
+    // Buscar el nombre del componente usando el ID
+    const componenteInfo = componentesOptions.find((c) => c.id === componente);
+    const nombreComponente = componenteInfo?.attributes?.nombre || null;
+
     return (
       <div
         onClick={() => onSelect(espacioNum)}
@@ -473,9 +525,9 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
           gridColumn: `span ${config?.colSpan || 1}`,
         }}
       >
-        {componente ? (
+        {nombreComponente ? (
           <div className="text-center">
-            <div className="font-medium">{componente}</div>
+            <div className="font-medium">{nombreComponente}</div>
             <div className="text-xs text-gray-400">
               {config?.rowSpan || 1}x{config?.colSpan || 1}
             </div>
@@ -575,11 +627,12 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         </div>
 
         {selectedSpace && (
-          <div className="border rounded-lg p-4 bg-gray-900/50">
+          <div className="border rounded-lg p-4 bg-gray-900/50 max-w-[40vw] mx-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">
                 Configurar Espacio {selectedSpace}
               </h3>
+
               {espacios[selectedSpace] && (
                 <Button
                   variant="destructive"
@@ -593,23 +646,14 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
             <div className="space-y-4">
               <div>
                 <Label>Componente</Label>
-                <Select
-                  value={espacios[selectedSpace] || ""}
+                <ComponenteSelector
+                  componentes={componentesOptions}
+                  categorias={["Lista de productos", "Personalizado"]}
                   onValueChange={(value) =>
                     handleComponenteChange(selectedSpace, value)
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar componente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {componentesOptions.map((comp) => (
-                      <SelectItem key={comp.id} value={comp.attributes.nombre}>
-                        {comp.attributes.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  value={espacios[selectedSpace] || ""}
+                />
               </div>
 
               {espacios[selectedSpace] && (
@@ -667,9 +711,7 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
 
   const renderComponenteConfig = (index, componente) => {
     // Buscar la configuración del componente en la lista de componentes
-    const componenteInfo = componentes.find(
-      (c) => c.attributes.nombre === componente
-    );
+    const componenteInfo = componentes.find((c) => c.id === componente);
 
     if (!componenteInfo) return null;
 
@@ -723,27 +765,20 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
       data: {
         nombre,
         descripcion,
-        columnas: parseInt(columnas),
-        filas: parseInt(filas),
-        fondo1,
-        overlayOpacity,
         componentes: {
-          header: headerComponente,
-          footer: footerComponente,
+          header: selectedHeader?.id || null,
+          footer: selectedFooter?.id || null,
           espacios,
           config_componentes: configComponentes,
         },
+        columnas,
+        filas,
+        fondo1,
+        overlayOpacity,
       },
     };
 
-    if (plantilla?.fondo?.data?.id) {
-      plantillaData.data.fondo = {
-        id: plantilla.fondo.data.id,
-      };
-    }
-
     try {
-      console.log("Datos a enviar:", JSON.stringify(plantillaData, null, 2));
       const url = isNewPlantilla ? "/api/plantillas" : `/api/plantillas/${id}`;
       const method = isNewPlantilla ? "POST" : "PUT";
 
@@ -813,252 +848,248 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   if (isLoading) return <p>Cargando...</p>;
 
   return (
-    <div className="p-6 rounded-lg shadow-md gap-4">
-      <h2 className="text-2xl font-bold mb-4">
-        {isNewPlantilla
-          ? "Crear Nueva Plantilla"
-          : `Editar Plantilla: ${nombre}`}
-      </h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex gap-4">
-          <div className="w-1/2">
-            <Label className="block mb-2">Nombre:</Label>
-            <Input
-              type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className="border rounded p-2 w-full"
-            />
-          </div>
-          <div className="w-1/2">
-            <Label className="block mb-2">Descripción:</Label>
-            <textarea
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              className="border rounded p-2 w-full"
-            />
-          </div>
-        </div>
-
-        <div className="flex gap-4">
-          <div className="w-1/2">
-            <Label className="block mb-2">Header:</Label>
-            <Select
-              onValueChange={setHeaderComponente}
-              value={headerComponente || "none"}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar header" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Ninguno</SelectItem>
-                {componentes
-                  .filter((c) => c.attributes.categoria === "Header")
-                  .map((componente) => (
-                    <SelectItem
-                      key={componente.id}
-                      value={componente.attributes.nombre}
-                    >
-                      {componente.attributes.nombre}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="w-1/2">
-            <Label className="block mb-2">Footer:</Label>
-            <Select
-              onValueChange={setFooterComponente}
-              value={footerComponente || "none"}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar footer" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Ninguno</SelectItem>
-                {componentes
-                  .filter((c) => c.attributes.categoria === "Footer")
-                  .map((componente) => (
-                    <SelectItem
-                      key={componente.id}
-                      value={componente.attributes.nombre}
-                    >
-                      {componente.attributes.nombre}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex gap-4 mt-8">
-          <div className="w-2/3">
-            <Label className="block mb-2">Vista previa:</Label>
-            <div
-              className="relative w-full overflow-hidden"
-              style={{ paddingTop: "56.25%" }} // 16:9 aspect ratio
-            >
-              <div className="absolute top-0 left-0 w-full h-full">
-                <PlantillasPreview
-                  key={previewKey}
-                  plantillaId={id}
-                  plantillaData={
-                    isNewPlantilla
-                      ? {
-                          id: "new",
-                          attributes: {
-                            nombre,
-                            descripcion,
-                            columnas,
-                            filas,
-                            componentes: {
-                              header: headerComponente,
-                              footer: footerComponente,
-                              espacios,
-                              config_componentes: configComponentes,
-                            },
-                            fondo: selectedImage
-                              ? {
-                                  data: {
-                                    attributes: {
-                                      url: selectedImage,
-                                      mime:
-                                        previewType === "video"
-                                          ? "video/mp4"
-                                          : "image/jpeg",
-                                    },
-                                  },
-                                }
-                              : null,
-                            fondo1,
-                            overlayOpacity,
-                          },
-                        }
-                      : null
-                  }
-                />
-              </div>
+    <>
+      <div className="p-6 rounded-lg shadow-md gap-4">
+        <h2 className="text-2xl font-bold mb-4">
+          {isNewPlantilla
+            ? "Crear Nueva Plantilla"
+            : `Editar Plantilla: ${nombre}`}
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex gap-4">
+            <div className="w-1/2">
+              <Label className="block mb-2">Nombre:</Label>
+              <Input
+                type="text"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                className="border rounded p-2 w-full"
+              />
+            </div>
+            <div className="w-1/2">
+              <Label className="block mb-2">Descripción:</Label>
+              <textarea
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                className="border rounded p-2 w-full"
+              />
             </div>
           </div>
 
-          <div className="w-1/3">
-            <Label className="block mb-2">Fondo:</Label>
-
-            <GradientPicker
-              background={fondo1}
-              setBackground={handleFondoSelect}
-              className="w-full"
-            />
-            <Card className="mb-4">
-              <CardContent
-                className="relative w-full h-[300px] p-0 overflow-hidden "
-                style={{
-                  background: previewType === "style" ? fondo1 : "transparent",
-                }}
+          <div className="flex gap-4 mt-8">
+            <div className="w-4/6">
+              <Label className="block mb-2">Vista previa:</Label>
+              <div
+                className="relative w-full overflow-hidden"
+                style={{ paddingTop: "90%" }} // 16:9 aspect ratio
               >
-                {/* Aquí se muestra la imagen o video de fondo */}
-                {previewType === "image" ? (
-                  <img
-                    src={fondo1.replace(/^url\((.*)\)$/, "$1")}
-                    alt="Fondo de la plantilla"
-                    className="w-full h-full object-cover"
+                <div className="absolute top-0 left-0 w-full h-full transform scale-80 origin-top-left">
+                  <PlantillasPreview
+                    key={previewKey}
+                    plantillaId={id}
+                    plantillaData={
+                      isNewPlantilla
+                        ? {
+                            id: "new",
+                            attributes: {
+                              nombre,
+                              descripcion,
+                              columnas,
+                              filas,
+                              componentes: {
+                                header: headerComponente,
+                                footer: footerComponente,
+                                espacios,
+                                config_componentes: configComponentes,
+                              },
+                              fondo: selectedImage
+                                ? {
+                                    data: {
+                                      attributes: {
+                                        url: selectedImage,
+                                        mime:
+                                          previewType === "video"
+                                            ? "video/mp4"
+                                            : "image/jpeg",
+                                      },
+                                    },
+                                  }
+                                : null,
+                              fondo1,
+                              overlayOpacity,
+                            },
+                          }
+                        : null
+                    }
                   />
-                ) : previewType === "video" ? (
-                  <video
-                    key={fondo1.replace(/^url\((.*)\)$/, "$1")}
-                    src={fondo1.replace(/^url\((.*)\)$/, "$1")}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-full object-cover"
+                </div>
+              </div>
+            </div>
+
+            <div className="w-2/6 ">
+              <div className="flex  gap-4">
+                <div className="w-1/2">
+                  <Label className="block mb-2">Header:</Label>
+                  <ComponenteSelector
+                    componentes={componentes.filter(
+                      (c) => c.attributes.categoria === "Header"
+                    )}
+                    categorias={["Header"]}
+                    allowEmpty={true}
+                    value={selectedHeader?.id}
+                    onValueChange={(componente) => {
+                      setSelectedHeader(componente);
+                      setHeaderComponente(componente?.id || null);
+                    }}
                   />
-                ) : null}
-              </CardContent>
-            </Card>
-            <div className="grid w-full items-center gap-1.5">
-              <div className="flex gap-2">
+                </div>
+
+                <div className="w-1/2">
+                  <Label className="block mb-2">Footer:</Label>
+                  <ComponenteSelector
+                    componentes={componentes.filter(
+                      (c) => c.attributes.categoria === "Footer"
+                    )}
+                    categorias={["Footer"]}
+                    allowEmpty={true}
+                    value={selectedFooter?.id}
+                    onValueChange={(componente) => {
+                      setSelectedFooter(componente);
+                      setFooterComponente(componente?.id || null);
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="gap-4 mt-4">
+                <Label className="block mb-2">Fondo:</Label>
+
+                <GradientPicker
+                  background={fondo1}
+                  setBackground={handleFondoSelect}
+                  className="w-full my-2"
+                />
+                <Card className="mb-4">
+                  <CardContent
+                    className="relative w-full h-[300px] p-0 overflow-hidden rounded-lg "
+                    style={{
+                      background:
+                        previewType === "style" ? fondo1 : "transparent",
+                    }}
+                  >
+                    {/* Aquí se muestra la imagen o video de fondo */}
+                    {previewType === "image" ? (
+                      <img
+                        src={fondo1.replace(/^url\((.*)\)$/, "$1")}
+                        alt="Fondo de la plantilla"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : previewType === "video" ? (
+                      <video
+                        key={fondo1.replace(/^url\((.*)\)$/, "$1")}
+                        src={fondo1.replace(/^url\((.*)\)$/, "$1")}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+                    ) : null}
+                  </CardContent>
+                </Card>
+                <div className="grid w-full items-center gap-1.5">
+                  <div className="flex gap-2">
+                    <Input
+                      id="fondo"
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,video/mp4,video/quicktime,video/x-msvideo"
+                      onChange={handleFileChange}
+                      className="mt-2 w-full bg-gray-900/50"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Sube una imagen o video (máx. 20MB) o selecciona uno de la
+                    biblioteca
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 mt-4"></div>
+                <Label className="block mb-2">Opacidad de overlay</Label>
                 <Input
-                  id="fondo"
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif,video/mp4,video/quicktime,video/x-msvideo"
-                  onChange={handleFileChange}
-                  className="mt-2 w-full bg-gray-900/50"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={overlayOpacity}
+                  onChange={(e) => setOverlayOpacity(parseInt(e.target.value))}
+                  className="w-[60%] bg-gray-900/50"
+                />
+                <p className="text-sm text-muted-foreground">
+                  {overlayOpacity}%
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-20"></div>
+
+          <div className="border rounded-lg p-4 bg-gray-900/50 z-100">
+            <h3 className="text-lg font-semibold "> Distribución del Grid</h3>
+
+            <p className="text-sm">
+              La plantilla se organiza en una cuadrícula (grid) que te permite
+              decidir cuántas filas y columnas necesitás para mostrar el
+              contenido.
+              <br />
+              <strong>Filas:</strong> Dividen la pantalla horizontalmente.
+              <strong> Columnas:</strong> Dividen la pantalla verticalmente.{" "}
+              <br />
+              Por ejemplo, podés elegir un grid de 3x2 (3 filas y 2 columnas)
+              para mostrar contenido de forma equilibrada.
+              <br /> Y despues podés agregar componentes a cada celda de la
+              cuadrícula para mostrar el contenido.
+            </p>
+
+            <div className="flex gap-4 my-4 ">
+              <div className="w-1/2">
+                <Label className="block mb-2">Filas:</Label>
+                <Input
+                  type="number"
+                  value={filas}
+                  onChange={(e) => setFilas(parseInt(e.target.value) || 1)}
+                  className="border rounded p-2 w-full"
+                  min="1"
+                  max="12"
+                  step="1"
                 />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Sube una imagen o video (máx. 20MB) o selecciona uno de la
-                biblioteca
-              </p>
+              <div className="w-1/2">
+                <Label className="block mb-2">Columnas:</Label>
+                <Input
+                  type="number"
+                  value={columnas}
+                  onChange={(e) => setColumnas(parseInt(e.target.value) || 1)}
+                  className="border rounded p-2 w-full"
+                  min="1"
+                  max="12"
+                  step="1"
+                />
+              </div>
             </div>
-            <div className="mt-4">
-              <Label className="block mb-2">Overlay Opacity:</Label>
-              <Input
-                type="range"
-                min="0"
-                max="100"
-                value={overlayOpacity}
-                onChange={(e) => setOverlayOpacity(parseInt(e.target.value))}
-                className="w-full"
-              />
-              <p className="text-sm text-muted-foreground">{overlayOpacity}%</p>
-            </div>
+            <div>{renderGridPreview()}</div>
           </div>
-        </div>
-        <div className="pt-20"></div>
 
-        <div className="border rounded-lg p-4 bg-gray-900/50 z-100">
-          <h3 className="text-lg font-semibold "> Distribución del Grid</h3>
-
-          <p className="text-sm">
-            La plantilla se organiza en una cuadrícula (grid) que te permite
-            decidir cuántas filas y columnas necesitás para mostrar el
-            contenido.
-            <br />
-            <strong>Filas:</strong> Dividen la pantalla horizontalmente.
-            <strong> Columnas:</strong> Dividen la pantalla verticalmente.{" "}
-            <br />
-            Por ejemplo, podés elegir un grid de 3x2 (3 filas y 2 columnas) para
-            mostrar contenido de forma equilibrada.
-            <br /> Y despues podés agregar componentes a cada celda de la
-            cuadrícula para mostrar el contenido.
-          </p>
-
-          <div className="flex gap-4 my-4 ">
-            <div className="w-1/2">
-              <Label className="block mb-2">Filas:</Label>
-              <Input
-                type="number"
-                value={filas}
-                onChange={(e) => setFilas(parseInt(e.target.value) || 1)}
-                className="border rounded p-2 w-full"
-                min="1"
-                max="12"
-                step="1"
-              />
-            </div>
-            <div className="w-1/2">
-              <Label className="block mb-2">Columnas:</Label>
-              <Input
-                type="number"
-                value={columnas}
-                onChange={(e) => setColumnas(parseInt(e.target.value) || 1)}
-                className="border rounded p-2 w-full"
-                min="1"
-                max="12"
-                step="1"
-              />
-            </div>
-          </div>
-          <div>{renderGridPreview()}</div>
-        </div>
-
-        <Button type="submit" variant="secondary" className="mt-6 w-full">
-          {isNewPlantilla ? "Crear Plantilla" : "Guardar Cambios"}
-        </Button>
-      </form>
-    </div>
+          <Button type="submit" variant="secondary" className="mt-6 w-full">
+            {isNewPlantilla ? "Crear Plantilla" : "Guardar Cambios"}
+          </Button>
+        </form>
+      </div>
+    </>
   );
+};
+
+const ComponenteWrapper = ({ nombreComponente, cargarComponente }) => {
+  const Componente = dynamic(() => cargarComponente(nombreComponente), {
+    ssr: false,
+  });
+  return <Componente />;
 };
 
 export default PlantillasEditor;

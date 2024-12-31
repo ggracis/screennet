@@ -2,12 +2,6 @@ import HeaderSection from "@/components/admin/HeaderSection";
 import PlantillasEditor from "@/components/admin/PlantillasEditor";
 import PlantillasPreview from "@/components/admin/PlantillasPreview";
 
-export async function generateMetadata() {
-  return {
-    title: `ScreenNet - Personalizar plantilla`,
-  };
-}
-
 const Plantillas = async ({ params }) => {
   const { id } = params;
 

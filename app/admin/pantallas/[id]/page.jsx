@@ -1,11 +1,5 @@
 import PantallasEditor from "@/components/admin/PantallasEditor";
 
-export async function generateMetadata() {
-  return {
-    title: `ScreenNet - Personalizar pantalla`,
-  };
-}
-
 const Pantallas = () => {
   return (
     <main>

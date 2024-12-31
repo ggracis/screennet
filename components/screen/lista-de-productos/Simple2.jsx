@@ -1,8 +1,10 @@
+// components\screen\lista-de-productos\Simple-2.jsx
+
 import { memo, useMemo } from "react";
 import { useProducts } from "@/hooks/useProducts";
-import { ProductCard } from "./ProductCard";
+import { ProductCard } from "../ProductCard";
 
-const Componente2 = memo(({ productos, titulo, rowSpan = 1 }) => {
+const Simple2 = memo(({ productos, titulo, rowSpan = 1 }) => {
   const { loading, error, products } = useProducts(productos);
   const baseItemsPerPage = 3;
   const adjustedItemsPerPage = baseItemsPerPage * rowSpan;
@@ -51,6 +53,6 @@ const Componente2 = memo(({ productos, titulo, rowSpan = 1 }) => {
   );
 });
 
-Componente2.displayName = "Componente2";
+Simple2.displayName = "Simple2";
 
-export default Componente2;
+export default Simple2;
