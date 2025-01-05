@@ -116,7 +116,7 @@ export default function ProductosLista() {
 
   const handleProductUpdated = (updatedProduct) => {
     updateProduct(updatedProduct); // Actualiza el producto en el store
-    fetchProductos(currentPage); // Opcional: refresca la lista desde la API
+    fetchProductos(currentPage, searchTerm); // Refresca la lista manteniendo la búsqueda actual
   };
 
   const handleDeleteProduct = async (productId) => {
@@ -347,7 +347,7 @@ export default function ProductosLista() {
   ];
 
   // Actualiza la función fetchProductos para incluir filtros
-  const fetchProductos = async (page = 1, search = "") => {
+  const fetchProductos = async (page = 1, search = searchTerm) => {
     setLoading(true);
     try {
       let url = `/api/productos?page=${page}&pageSize=${pageSize}`;

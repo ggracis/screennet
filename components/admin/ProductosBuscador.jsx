@@ -16,13 +16,15 @@ const ProductosBuscador = ({ selectedProducts = [], onChange }) => {
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return products;
     return products.filter((product) =>
-      product.attributes.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+      product.attributes?.nombre
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, products]);
 
   const getProductName = (id) => {
     const product = products.find((p) => p.id === id);
-    return product ? product.attributes.nombre : `Producto ${id}`;
+    return product ? product.attributes?.nombre : `Producto ${id}`;
   };
 
   const toggleProducto = (producto) => {
@@ -75,7 +77,7 @@ const ProductosBuscador = ({ selectedProducts = [], onChange }) => {
                     : "opacity-0"
                 }`}
               />
-              {producto.attributes.nombre}
+              {producto.attributes?.nombre}
             </li>
           ))}
         </ul>

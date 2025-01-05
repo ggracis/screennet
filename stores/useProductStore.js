@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-const POLLING_INTERVAL = 10000; // 10 segundos
+const POLLING_INTERVAL = 60000; // 1 minute
+const PAGE_SIZE = 100; // Ajustado para mejor rendimiento
 
 const useProductStore = create(
   persist(
@@ -16,20 +17,41 @@ const useProductStore = create(
           set({ loading: true });
           let allProducts = [];
           let page = 1;
-          const pageSize = 100;
-          const baseUrl = process.env.NEXTAUTH_URL || "";
+          let hasMore = true;
+          const baseUrl = process.env.NEXT_PUBLIC_STRAPI_URL || "";
+          const token = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
 
-          while (true) {
+          while (hasMore) {
             const response = await fetch(
-              `${baseUrl}/api/productos?page=${page}&pageSize=${pageSize}&populate=*`
+              `${baseUrl}/api/productos?pagination[page]=${page}&pagination[pageSize]=${PAGE_SIZE}&populate=*`,
+              {
+                method: "GET",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                credentials: "include",
+              }
             );
 
-            if (!response.ok) throw new Error("Error fetching products");
+            if (!response.ok) {
+              console.error("Response status:", response.status);
+              console.error(
+                "Response headers:",
+                Object.fromEntries(response.headers)
+              );
+              throw new Error(`Error fetching products: ${response.status}`);
+            }
 
             const { data, meta } = await response.json();
-            allProducts = [...allProducts, ...data];
 
-            if (page >= meta.pagination.pageCount) break;
+            if (!data) {
+              console.error("No data received from API");
+              break;
+            }
+
+            allProducts = [...allProducts, ...data];
+            hasMore = page < (meta?.pagination?.pageCount || 1);
             page++;
           }
 
@@ -38,9 +60,12 @@ const useProductStore = create(
             lastUpdate: Date.now(),
             loading: false,
           });
+
+          return allProducts;
         } catch (error) {
           console.error("Error fetching all products:", error);
           set({ loading: false });
+          return [];
         }
       },
 
@@ -58,13 +83,16 @@ const useProductStore = create(
 
       initializePolling: () => {
         if (typeof window !== "undefined") {
-          const interval = setInterval(async () => {
+          const fetchUpdatedProducts = async () => {
             try {
-              const baseUrl = process.env.NEXTAUTH_URL || "";
+              const baseUrl = process.env.NEXT_PUBLIC_STRAPI_URL || "";
               const response = await fetch(
-                `${baseUrl}/api/productos/actualizados?lastUpdate=${
-                  get().lastUpdate
-                }`
+                `/api/productos/actualizados?lastUpdate=${get().lastUpdate}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+                  },
+                }
               );
               if (!response.ok) throw new Error("Error fetching updates");
               const { data } = await response.json();
@@ -81,8 +109,13 @@ const useProductStore = create(
             } catch (error) {
               console.error("Error polling updates:", error);
             }
-          }, POLLING_INTERVAL);
-          set({ pollingInterval: interval });
+          };
+
+          const intervalId = setInterval(
+            fetchUpdatedProducts,
+            POLLING_INTERVAL
+          );
+          set({ pollingInterval: intervalId });
         }
       },
 
@@ -94,7 +127,7 @@ const useProductStore = create(
         }
       },
 
-      isStale: () => Date.now() - get().lastUpdate > CACHE_DURATION,
+      isStale: () => Date.now() - get().lastUpdate > POLLING_INTERVAL,
 
       setProducts: (products) =>
         set({
@@ -166,11 +199,20 @@ const useProductStore = create(
       fetchProductsByIds: async (ids) => {
         try {
           const idsString = ids.join(",");
-          const response = await fetch(`/api/productos?ids=${idsString}`);
-          const data = await response.json();
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/productos?filters[id][$in]=${idsString}&populate=*`,
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+              },
+            }
+          );
+          const { data } = await response.json();
 
           if (Array.isArray(data)) {
-            set({ products: data });
+            set((state) => ({
+              products: [...state.products, ...data],
+            }));
           }
         } catch (error) {
           console.error("Error fetching products by IDs:", error);

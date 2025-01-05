@@ -1,4 +1,3 @@
-//components\screen\lista-de-productos\Galeria1.jsx
 "use client";
 
 import {
@@ -8,34 +7,27 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import useProductStore from "@/stores/useProductStore";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
-const Galeria1 = ({ productos: productosIds = [] }) => {
-  const [cachedProducts, setCachedProducts] = useState({});
-  const { products, fetchProductsByIds } = useProductStore();
+const Galeria2 = ({ productos: productosIds = [] }) => {
+  const { products, fetchAllProducts, loading } = useProductStore();
   const [filteredProducts, setFilteredProducts] = useState([]);
 
   useEffect(() => {
-    const loadProducts = async () => {
-      if (productosIds.length > 0) {
-        await fetchProductsByIds(productosIds);
-        setCachedProducts((prev) => {
-          const newCache = { ...prev };
-          products.forEach((product) => {
-            newCache[product.id] = product;
-          });
-          return newCache;
-        });
-        const ordered = productosIds
-          .map((id) => cachedProducts[id])
-          .filter(Boolean);
-        setFilteredProducts(ordered);
-      }
-    };
+    if (products.length === 0) {
+      fetchAllProducts();
+    }
+  }, []);
 
-    loadProducts();
-  }, [productosIds, fetchProductsByIds, products, cachedProducts]);
+  useEffect(() => {
+    if (productosIds.length > 0 && products.length > 0) {
+      const ordered = productosIds
+        .map((id) => products.find((p) => p.id === id))
+        .filter(Boolean);
+      setFilteredProducts(ordered);
+    }
+  }, [productosIds, products]);
 
   const procesarMedios = (producto) => {
     const medios = [];
@@ -57,8 +49,12 @@ const Galeria1 = ({ productos: productosIds = [] }) => {
     return precios["C/U"] ? `$${precios["C/U"]}` : "Consultar";
   };
 
-  if (!filteredProducts.length) {
+  if (loading) {
     return <div>Cargando productos...</div>;
+  }
+
+  if (!filteredProducts.length) {
+    return <div>No se encontraron productos</div>;
   }
 
   return (
@@ -80,55 +76,30 @@ const Galeria1 = ({ productos: productosIds = [] }) => {
           <CarouselContent>
             {filteredProducts.map((producto) => (
               <CarouselItem key={producto.id}>
-                <div className="flex items-center justify-center gap-8 h-[80vh]">
-                  {/* Columna izquierda - Información */}
+                <div className="items-center justify-center flex flex-col gap-4">
+                  <h1 className="text-4xl font-medium title-font mb-4 text-white">
+                    {producto.attributes.nombre}
+                  </h1>
 
-                  <div className="w-1/2 pr-8 space-y-4">
-                    <h1 className="text-6xl font-medium title-font mb-4 text-white">
-                      {producto.attributes.nombre}
-                    </h1>
-                    <h3 className="text-2xl title-font text-gray-600">
-                      {producto.attributes.categoria?.data?.attributes
-                        ?.nombre && (
-                        <>
-                          {producto.attributes.categoria.data.attributes.nombre}
-                        </>
-                      )}
-                      {producto.attributes.subcategoria?.data?.attributes
-                        ?.nombre && (
-                        <>
-                          {" "}
-                          -{" "}
-                          {
-                            producto.attributes.subcategoria.data.attributes
-                              .nombre
-                          }
-                        </>
-                      )}
-                    </h3>
-
-                    {/* Precios */}
-                    <div className="space-y-2">
-                      {Object.entries(producto.attributes.precios || {})
-                        .filter(([_, precio]) => precio)
-                        .map(([titulo, precio]) => (
-                          <div
-                            key={`${producto.id}-${titulo}`}
-                            className="flex items-center gap-2"
-                          >
-                            <span className="text-gray-300 text-4xl">
-                              {titulo}:
-                            </span>
-                            <span className="text-4xl font-bold text-white">
-                              ${precio}
-                            </span>
-                          </div>
-                        ))}
-                    </div>
+                  {/* Precios */}
+                  <div className="items-center justify-center flex flex-col gap-4">
+                    {Object.entries(producto.attributes.precios || {})
+                      .filter(([_, precio]) => precio)
+                      .map(([titulo, precio]) => (
+                        <div
+                          key={`${producto.id}-${titulo}`}
+                          className="items-center justify-center flex flex-col gap-4"
+                        >
+                          <p className="text-gray-300 text-4xl">{titulo}:</p>
+                          <span className="text-4xl font-bold text-white">
+                            ${precio}
+                          </span>
+                        </div>
+                      ))}
                   </div>
 
-                  {/* Columna derecha - Galería */}
-                  <div className="w-1/2 h-full">
+                  {/* Fotos */}
+                  <div>
                     {procesarMedios(producto).length > 0 ? (
                       <Carousel
                         opts={{
@@ -137,7 +108,7 @@ const Galeria1 = ({ productos: productosIds = [] }) => {
                         }}
                         plugins={[
                           Autoplay({
-                            delay: 2000,
+                            delay: 8000,
                           }),
                         ]}
                         className="h-full"
@@ -190,4 +161,4 @@ const Galeria1 = ({ productos: productosIds = [] }) => {
   );
 };
 
-export default Galeria1;
+export default Galeria2;

@@ -32,45 +32,59 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   const { id } = params;
   const body = await request.json();
+
   try {
-    // Preparar los datos para la actualización
+    const strapiUrl = `${process.env.STRAPI_API_URL}/productos/${id}`;
+    console.log("=== INICIO ACTUALIZACIÓN PRODUCTO ===");
+    console.log("Body recibido:", JSON.stringify(body, null, 2));
+
+    // Preparar datos para Strapi v4
     const updateData = {
       data: {
-        nombre: body.nombre,
-        descripcion: body.descripcion,
-        precios: body.precios, // Usar directamente el objeto de precios
-        unidadMedida: body.unidadMedida, // Asegurarse de enviar la unidad de medida
-        categoria: body.categoria
-          ? { connect: [{ id: parseInt(body.categoria) }] }
-          : null,
-        subcategoria: body.subcategoria
-          ? { connect: [{ id: parseInt(body.subcategoria) }] }
-          : null,
+        nombre: body.nombre || body.data?.nombre,
+        descripcion: body.descripcion || body.data?.descripcion,
+        precios: body.precios || body.data?.precios,
+        unidadMedida: body.unidadMedida || body.data?.unidadMedida,
+        categoria: body.categoria || body.data?.categoria,
+        subcategoria: body.subcategoria || body.data?.subcategoria,
       },
     };
 
-    const response = await fetch(
-      `${process.env.STRAPI_API_URL}/productos/${id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
-        },
-        body: JSON.stringify(updateData),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // Manejo específico de fotos para Strapi v4
+    if (body.data?.foto?.set) {
+      updateData.data.foto = body.data.foto.set;
     }
 
-    const data = await response.json();
+    console.log("URL de Strapi:", strapiUrl);
+    console.log("Datos finales:", JSON.stringify(updateData, null, 2));
+
+    const response = await fetch(strapiUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+      },
+      body: JSON.stringify(updateData),
+    });
+
+    // Log de la respuesta completa
+    const responseText = await response.text();
+    console.log("Respuesta cruda de Strapi:", responseText);
+
+    if (!response.ok) {
+      throw new Error(`Error de Strapi: ${response.status} - ${responseText}`);
+    }
+
+    const data = JSON.parse(responseText);
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error al actualizar el producto:", error);
+    console.error("Error detallado:", error);
     return NextResponse.json(
-      { error: "Error al actualizar el producto" },
+      {
+        error: "Error al actualizar el producto",
+        details: error.message,
+        requestBody: body,
+      },
       { status: 500 }
     );
   }

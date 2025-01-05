@@ -51,6 +51,7 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   const [componentesCache, setComponentesCache] = useState({});
   const [selectedHeader, setSelectedHeader] = useState(null);
   const [selectedFooter, setSelectedFooter] = useState(null);
+  const [cachedProducts, setCachedProducts] = useState({});
 
   const determineMediaType = (url) => {
     if (!url) return null;

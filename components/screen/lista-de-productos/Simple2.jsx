@@ -1,18 +1,28 @@
 // components\screen\lista-de-productos\Simple-2.jsx
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useEffect, useState } from "react";
 import { useProducts } from "@/hooks/useProducts";
 import { ProductCard } from "../ProductCard";
 
 const Simple2 = memo(({ productos, titulo, rowSpan = 1 }) => {
+  const [cachedProducts, setCachedProducts] = useState({});
   const { loading, error, products } = useProducts(productos);
   const baseItemsPerPage = 3;
   const adjustedItemsPerPage = baseItemsPerPage * rowSpan;
 
+  useEffect(() => {
+    setCachedProducts((prev) => {
+      const newCache = { ...prev };
+      products.forEach((product) => {
+        newCache[product.id] = product;
+      });
+      return newCache;
+    });
+  }, [products]);
+
   const displayProducts = useMemo(
-    () =>
-      productos.map((id) => products.find((p) => p.id === id)).filter(Boolean),
-    [productos, products]
+    () => productos.map((id) => cachedProducts[id]).filter(Boolean),
+    [productos, cachedProducts]
   );
 
   return (

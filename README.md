@@ -22,6 +22,8 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
 - [✔️] CRUD de productos
   - [✔️] Los precios pueden variar entre tipos de productos (unidad, kilo, porción)
   - [✔️] Poder cambiar el precio de una categoría/subcategoría fijando un porcentaje sobre el precio original
+  - [✔️] Subir fotos de los productos desde el editor
+  - [❌] Mejorar funcionamiento y comportamiento del drawer (editor) de productos
   - [❌] Poder agregar/modificar/eliminar categorías/subcategorías
   
 ### Marcas
@@ -43,8 +45,6 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
   - [❌] Poder elegir modo claro o oscuro
   - [✔️] Mostrar vista previa de cada componente (resuelto con un popover)
 
-### Modulos
- 
 
 ### Locales
 - [❌] CRUD de locales

@@ -21,6 +21,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
     initializePolling,
     cleanup: cleanupProducts,
     fetchAllProducts,
+    products,
   } = useProductStore();
 
   useEffect(() => {
@@ -52,7 +53,10 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
           }
 
           setLocalPlantilla(data.pantalla.attributes.plantilla.data);
-          await fetchAllProducts();
+
+          if (products.length === 0) {
+            await fetchAllProducts();
+          }
           initializePolling();
         } catch (err) {
           console.error("Error fetching screen data:", err);
@@ -74,6 +78,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
     fetchAllProducts,
     initializePolling,
     cleanupProducts,
+    products.length,
   ]);
 
   useEffect(() => {
