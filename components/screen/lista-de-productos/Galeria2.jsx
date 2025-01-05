@@ -58,106 +58,103 @@ const Galeria2 = ({ productos: productosIds = [] }) => {
   }
 
   return (
-    <section className="text-gray-400 relative h-screen flex flex-col">
-      <div className="flex-1 container mx-auto px-5 py-10 flex items-center justify-center">
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          plugins={[
-            Autoplay({
-              delay: 10000,
-              stopOnInteraction: false,
-            }),
-          ]}
-          className="w-full"
-        >
-          <CarouselContent>
-            {filteredProducts.map((producto) => (
-              <CarouselItem key={producto.id}>
-                <div className="items-center justify-center flex flex-col gap-4">
-                  <h1 className="text-4xl font-medium title-font mb-4 text-white">
-                    {producto.attributes.nombre}
-                  </h1>
+    <div className="flex-1 container mx-auto p-2 flex items-center justify-center">
+      <Carousel
+        opts={{
+          align: "start",
+          loop: true,
+        }}
+        plugins={[
+          Autoplay({
+            delay: 10000,
+            stopOnInteraction: false,
+          }),
+        ]}
+        className="w-full"
+      >
+        <CarouselContent>
+          {filteredProducts.map((producto) => (
+            <CarouselItem key={producto.id}>
+              <div className="items-center justify-center flex flex-col">
+                <h1 className="text-4xl font-medium title-font mb-2 text-white">
+                  {producto.attributes.nombre}
+                </h1>
 
-                  {/* Precios */}
-                  <div className="items-center justify-center flex flex-col gap-4">
-                    {Object.entries(producto.attributes.precios || {})
-                      .filter(([_, precio]) => precio)
-                      .map(([titulo, precio]) => (
-                        <div
-                          key={`${producto.id}-${titulo}`}
-                          className="items-center justify-center flex flex-col gap-4"
-                        >
-                          <p className="text-gray-300 text-4xl">{titulo}:</p>
-                          <span className="text-4xl font-bold text-white">
-                            ${precio}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-
-                  {/* Fotos */}
-                  <div>
-                    {procesarMedios(producto).length > 0 ? (
-                      <Carousel
-                        opts={{
-                          align: "start",
-                          loop: true,
-                        }}
-                        plugins={[
-                          Autoplay({
-                            delay: 8000,
-                          }),
-                        ]}
-                        className="h-full"
+                {/* Precios */}
+                <div className="items-center justify-center flex flex-col">
+                  {Object.entries(producto.attributes.precios || {})
+                    .filter(([_, precio]) => precio)
+                    .map(([titulo, precio]) => (
+                      <div
+                        key={`${producto.id}-${titulo}`}
+                        className="items-center justify-center "
                       >
-                        <CarouselContent className="h-full">
-                          {procesarMedios(producto).map((medio, idx) => (
-                            <CarouselItem key={idx} className="h-full">
-                              {medio.tipo === "video" ? (
-                                <video
-                                  className="w-full h-full object-cover"
-                                  autoPlay
-                                  muted
-                                  loop
-                                  playsInline
-                                >
-                                  <source src={medio.url} type="video/mp4" />
-                                </video>
-                              ) : (
-                                <Image
-                                  alt={producto.attributes.nombre}
-                                  className="w-full h-full object-contain"
-                                  src={medio.url}
-                                  width={800}
-                                  height={800}
-                                  priority
-                                  quality={100}
-                                  loading="eager"
-                                  blurDataURL={medio.url}
-                                />
-                              )}
-                            </CarouselItem>
-                          ))}
-                        </CarouselContent>
-                      </Carousel>
-                    ) : (
-                      <div className="h-full bg-gray-800 rounded flex items-center justify-center">
-                        <span className="text-gray-500">
-                          Sin imágenes disponibles
+                        <span className="text-4xl font-bold text-white">
+                          ${precio}
                         </span>
                       </div>
-                    )}
-                  </div>
+                    ))}
                 </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
-      </div>
-    </section>
+
+                {/* Fotos */}
+                <div>
+                  {procesarMedios(producto).length > 0 ? (
+                    <Carousel
+                      opts={{
+                        align: "start",
+                        loop: true,
+                      }}
+                      plugins={[
+                        Autoplay({
+                          delay: 8000,
+                        }),
+                      ]}
+                      className="h-full"
+                    >
+                      <CarouselContent className="h-full">
+                        {procesarMedios(producto).map((medio, idx) => (
+                          <CarouselItem key={idx} className="h-full">
+                            {medio.tipo === "video" ? (
+                              <video
+                                className="w-full h-full object-cover"
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                              >
+                                <source src={medio.url} type="video/mp4" />
+                              </video>
+                            ) : (
+                              <Image
+                                alt={producto.attributes.nombre}
+                                className="w-full h-full max-h-[37vh] object-contain"
+                                src={medio.url}
+                                width={800}
+                                height={800}
+                                priority
+                                quality={100}
+                                loading="eager"
+                                blurDataURL={medio.url}
+                              />
+                            )}
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                    </Carousel>
+                  ) : (
+                    <div className="h-full bg-gray-800 rounded flex items-center justify-center">
+                      <span className="text-gray-500">
+                        Sin imágenes disponibles
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+    </div>
   );
 };
 
