@@ -61,6 +61,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import ProductosExportImport from "./ProductosExportImport";
 
 export default function ProductosLista() {
   const { products, addProduct, updateProduct, deleteProduct } =
@@ -182,6 +183,9 @@ export default function ProductosLista() {
 
   const [pageSize, setPageSize] = useState(50);
   const pageSizeOptions = [10, 25, 50, 100];
+
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   // Fetch para obtener categorías y subcategorías
   const fetchCategorias = async () => {
@@ -531,6 +535,47 @@ export default function ProductosLista() {
     }
   };
 
+  const handleDeleteAllProducts = async () => {
+    try {
+      setIsDeletingAll(true);
+      toast({
+        title: "Eliminando productos",
+        description: "Este proceso puede tomar unos momentos...",
+      });
+
+      const response = await fetch(`/api/productos`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al eliminar todos los productos");
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: "Éxito",
+        description: `Se han eliminado ${
+          result.succeeded
+        } productos correctamente${
+          result.failed > 0 ? ` (${result.failed} fallidos)` : ""
+        }`,
+      });
+
+      fetchProductos(1); // Recargar la lista
+    } catch (error) {
+      console.error("Error deleting all products:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron eliminar los productos",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingAll(false);
+      setShowDeleteAllDialog(false);
+    }
+  };
+
   if (loading) return <div>Cargando...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -613,6 +658,16 @@ export default function ProductosLista() {
         >
           Edición por lotes ({selectedProducts.length})
         </Button>
+
+        <Button
+          onClick={() => setShowDeleteAllDialog(true)}
+          variant="destructive"
+          size="sm"
+        >
+          Eliminar Todo
+        </Button>
+
+        <ProductosExportImport />
       </div>
 
       {/* Tabla - Cuerpo */}
@@ -886,6 +941,33 @@ export default function ProductosLista() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={showDeleteAllDialog}
+        onOpenChange={setShowDeleteAllDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminarán permanentemente
+              TODOS los productos de la base de datos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingAll}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllProducts}
+              disabled={isDeletingAll}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingAll ? "Eliminando..." : "Eliminar Todo"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -57,23 +57,31 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const body = await request.json();
   try {
-    // Preparar los datos para la creación
+    const body = await request.json();
+    console.log("Datos recibidos en API:", JSON.stringify(body, null, 2));
+
+    // Asegurarse de que los datos estén en el formato correcto para Strapi
     const createData = {
       data: {
-        nombre: body.nombre,
-        descripcion: body.descripcion,
-        precios: body.precios, // Usar directamente el objeto de precios
-        unidadMedida: body.unidadMedida, // Asegurarse de enviar la unidad de medida
-        categoria: body.categoria
-          ? { connect: [{ id: parseInt(body.categoria) }] }
-          : null,
-        subcategoria: body.subcategoria
-          ? { connect: [{ id: parseInt(body.subcategoria) }] }
-          : null,
+        nombre: body.data.nombre,
+        descripcion: body.data.descripcion,
+        unidadMedida: body.data.unidadMedida,
+        precios: body.data.precios,
+        // Formato correcto para relaciones en Strapi v4
+        categoria: body.data.categoria
+          ? { connect: [body.data.categoria] }
+          : undefined,
+        subcategoria: body.data.subcategoria
+          ? { connect: [body.data.subcategoria] }
+          : undefined,
       },
     };
+
+    console.log(
+      "Datos enviados a Strapi:",
+      JSON.stringify(createData, null, 2)
+    );
 
     const response = await fetch(`${process.env.STRAPI_API_URL}/productos`, {
       method: "POST",
@@ -85,15 +93,119 @@ export async function POST(request) {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json();
+      console.error("Error de Strapi:", errorData);
+      throw new Error(JSON.stringify(errorData));
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error al crear el producto:", error);
+    console.error("Error completo:", error);
     return NextResponse.json(
-      { error: "Error al crear el producto" },
+      { error: "Error al crear el producto", details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    console.log("=== INICIO DELETE ALL PRODUCTOS ===");
+
+    // Obtener productos por lotes
+    let allProducts = [];
+    let page = 1;
+    let totalPages = 1;
+    const pageSize = 100;
+
+    // Primero obtenemos todos los productos en lotes
+    while (page <= totalPages) {
+      const url = `${process.env.STRAPI_API_URL}/productos?pagination[page]=${page}&pagination[pageSize]=${pageSize}`;
+      console.log(`Obteniendo lote ${page} - URL:`, url);
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Error obteniendo productos: ${response.status} - ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+      allProducts = allProducts.concat(data.data);
+      totalPages = data.meta.pagination.pageCount;
+      console.log(
+        `Lote ${page}/${totalPages} obtenido - ${data.data.length} productos`
+      );
+      page++;
+    }
+
+    console.log(`Total de productos a eliminar: ${allProducts.length}`);
+
+    // Eliminar cada producto
+    const deleteResults = [];
+    for (const product of allProducts) {
+      const deleteUrl = `${process.env.STRAPI_API_URL}/productos/${product.id}`;
+      console.log(`Eliminando producto ${product.id}`);
+
+      try {
+        const deleteResponse = await fetch(deleteUrl, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        deleteResults.push({
+          productId: product.id,
+          success: deleteResponse.ok,
+          status: deleteResponse.status,
+        });
+
+        if (!deleteResponse.ok) {
+          console.error(
+            `Error al eliminar producto ${product.id}: ${deleteResponse.status}`
+          );
+        }
+      } catch (error) {
+        console.error(`Error al eliminar producto ${product.id}:`, error);
+        deleteResults.push({
+          productId: product.id,
+          success: false,
+          error: error.message,
+        });
+      }
+    }
+
+    const successCount = deleteResults.filter((r) => r.success).length;
+    const failCount = deleteResults.filter((r) => !r.success).length;
+
+    console.log("=== RESUMEN DE ELIMINACIÓN ===");
+    console.log(`Productos eliminados: ${successCount}`);
+    console.log(`Fallos: ${failCount}`);
+
+    return NextResponse.json({
+      message: "Proceso de eliminación completado",
+      totalProcessed: allProducts.length,
+      succeeded: successCount,
+      failed: failCount,
+      details: deleteResults,
+    });
+  } catch (error) {
+    console.error("Error en DELETE ALL:", error);
+    return NextResponse.json(
+      {
+        error: "Error eliminando productos",
+        details: error.message,
+      },
       { status: 500 }
     );
   }

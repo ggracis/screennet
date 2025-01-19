@@ -23,6 +23,7 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
   - [✔️] Los precios pueden variar entre tipos de productos (unidad, kilo, porción)
   - [✔️] Poder cambiar el precio de una categoría/subcategoría fijando un porcentaje sobre el precio original
   - [✔️] Subir fotos de los productos desde el editor
+  - [✔️] Importar y exportar productos desde un archivo Excel
   - [❌] Mejorar funcionamiento y comportamiento del drawer (editor) de productos
   - [❌] Poder agregar/modificar/eliminar categorías/subcategorías
   
