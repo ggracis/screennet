@@ -24,18 +24,18 @@ jobs:
           script: |
             cd ~/screennet
 
-            # Cargar NVM (ajusta la ruta según tu configuración)
+            # Cargar NVM
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-            # O alternativamente, usar las rutas absolutas
             export PATH="$HOME/.nvm/versions/node/$(node -v)/bin:$PATH"
 
             # Guardar el hash del último commit
             LAST_COMMIT=$(git rev-parse HEAD)
 
-            # Actualizar código
-            git pull origin master
+            # Forzar actualización desde remoto
+            git fetch origin master
+            git clean -fd  # Eliminar archivos no rastreados
+            git reset --hard origin/master
 
             # Si no hay cambios, salir
             if [ "$LAST_COMMIT" = "$(git rev-parse HEAD)" ]; then
@@ -43,7 +43,7 @@ jobs:
               exit 0
             fi
 
-            # Instalar solo si hay cambios en package.json
+            # Instalar dependencias si hay cambios en package.json
             if git diff --name-only $LAST_COMMIT HEAD | grep -q "package.json"; then
               echo "Cambios detectados en package.json, instalando dependencias..."
               npm ci --production
