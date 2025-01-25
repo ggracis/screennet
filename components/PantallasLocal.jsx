@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import useProductStore from "@/stores/useProductStore";
 import useScreenStore from "@/stores/useScreenStore";
 import Image from "next/image";
+import FontLoader from "@/components/ui/FontLoader";
 
 const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
   const [localPlantilla, setLocalPlantilla] = useState(null);
@@ -52,7 +53,13 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
             );
           }
 
-          setLocalPlantilla(data.pantalla.attributes.plantilla.data);
+          const plantilla = data.pantalla.attributes.plantilla.data;
+          if (!plantilla.attributes.componentes.config_global) {
+            plantilla.attributes.componentes.config_global = {
+              tipografia: { titulos: "", textos: "" },
+            };
+          }
+          setLocalPlantilla(plantilla);
 
           if (products.length === 0) {
             await fetchAllProducts();
@@ -179,131 +186,152 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
 
   const gridClasses = preview ? "h-full" : "min-h-[50vh]";
 
-  return (
-    <div className={containerClasses}>
-      {/* Fondo */}
-      {fondo1 && (
-        <div className="fixed inset-0 -z-10">
-          {isFondoVideo ? (
-            <video
-              key={fondoUrl}
-              src={fondoUrl}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : isFondoImage ? (
-            <Image
-              src={fondoUrl}
-              alt="Fondo"
-              fill={true}
-              className="absolute inset-0 w-full h-full object-cover"
-              priority={true}
-              sizes="100vw"
-              quality={75}
-            />
-          ) : isFondoStyle ? (
-            <div
-              className="absolute inset-0 w-full h-full"
-              style={{ background: fondo1 }}
-            />
-          ) : null}
-          <div
-            className="absolute inset-0 bg-black"
-            style={{ opacity: overlayOpacity / 100 }}
-          />
-          {/* Overlay opcional */}
-        </div>
-      )}
+  // Extraer las fuentes configuradas
+  const configuredFonts = [
+    localPlantilla.attributes.componentes?.config_global?.tipografia?.titulos,
+    localPlantilla.attributes.componentes?.config_global?.tipografia?.textos,
+  ].filter(Boolean); // Solo fuentes que existan
 
-      {/* Contenido */}
-      <div className="relative z-10 flex flex-col h-full">
-        {/* Header con ref para medir */}
-        {plantillaComponentes.header && (
-          <div ref={(el) => el && setHeaderHeight(el.offsetHeight)}>
-            <Suspense
-              fallback={
-                <div className="animate-pulse bg-gray-200 h-16">
-                  Cargando header...
-                </div>
-              }
-            >
-              <DynamicComponent
-                idComponente={plantillaComponentes.header}
-                cargarComponente={cargarComponente}
+  return (
+    <>
+      <FontLoader fonts={configuredFonts} />
+      <div
+        className={containerClasses}
+        style={{
+          "--font-titulos": `'${
+            localPlantilla.attributes.componentes?.config_global?.tipografia
+              ?.titulos || "inherit"
+          }', sans-serif`,
+          "--font-textos": `'${
+            localPlantilla.attributes.componentes?.config_global?.tipografia
+              ?.textos || "inherit"
+          }', sans-serif`,
+        }}
+      >
+        {/* Fondo */}
+        {fondo1 && (
+          <div className="fixed inset-0 -z-10">
+            {isFondoVideo ? (
+              <video
+                key={fondoUrl}
+                src={fondoUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
               />
-            </Suspense>
+            ) : isFondoImage ? (
+              <Image
+                src={fondoUrl}
+                alt="Fondo"
+                fill={true}
+                className="absolute inset-0 w-full h-full object-cover"
+                priority={true}
+                sizes="100vw"
+                quality={75}
+              />
+            ) : isFondoStyle ? (
+              <div
+                className="absolute inset-0 w-full h-full"
+                style={{ background: fondo1 }}
+              />
+            ) : null}
+            <div
+              className="absolute inset-0 bg-black"
+              style={{ opacity: overlayOpacity / 100 }}
+            />
+            {/* Overlay opcional */}
           </div>
         )}
 
-        {/* Grid con altura dinámica */}
-        <div
-          className={`container mx-auto p-4 grid gap-4 justify-center ${gridClasses}`}
-          style={{
-            gridTemplateColumns: `repeat(${localPlantilla.attributes.columnas}, 1fr)`,
-            gridTemplateRows: `repeat(${localPlantilla.attributes.filas}, 1fr)`,
-          }}
-        >
-          {Object.entries(plantillaComponentes.espacios).map(
-            ([espacio, idComponente]) => {
-              const config = plantillaComponentes.config_componentes[espacio];
-              return (
-                <Suspense
-                  key={espacio}
-                  fallback={
-                    <div className="animate-pulse bg-gray-200 rounded-lg p-4">
-                      Cargando...
-                    </div>
-                  }
-                >
-                  <div
-                    style={{
-                      gridRow: `span ${config?.rowSpan || 1}`,
-                      gridColumn: `span ${config?.colSpan || 1}`,
-                    }}
-                  >
-                    <DynamicComponent
-                      idComponente={idComponente}
-                      cargarComponente={cargarComponente}
-                      config={{
-                        ...config,
-                        data: config?.data || config?.titulo,
-                      }}
-                    />
+        {/* Contenido */}
+        <div className="relative z-10 flex flex-col h-full">
+          {/* Header con ref para medir */}
+          {plantillaComponentes.header && (
+            <div ref={(el) => el && setHeaderHeight(el.offsetHeight)}>
+              <Suspense
+                fallback={
+                  <div className="animate-pulse bg-gray-200 h-16">
+                    Cargando header...
                   </div>
-                </Suspense>
-              );
-            }
+                }
+              >
+                <DynamicComponent
+                  idComponente={plantillaComponentes.header}
+                  cargarComponente={cargarComponente}
+                />
+              </Suspense>
+            </div>
           )}
-        </div>
 
-        {/* Footer con ref para medir */}
-        <div
-          className="fixed bottom-0 w-full z-10"
-          ref={(el) => el && setFooterHeight(el?.offsetHeight || 0)}
-        >
-          {plantillaComponentes.footer && (
-            <Suspense
-              fallback={
-                <div className="animate-pulse bg-gray-200 h-16">
-                  Cargando footer...
-                </div>
+          {/* Grid con altura dinámica */}
+          <div
+            className={`container mx-auto p-4 grid gap-4 justify-center  ${gridClasses}`}
+            style={{
+              gridTemplateColumns: `repeat(${localPlantilla.attributes.columnas}, 1fr)`,
+              gridTemplateRows: `repeat(${localPlantilla.attributes.filas}, 1fr)`,
+            }}
+          >
+            {Object.entries(plantillaComponentes.espacios).map(
+              ([espacio, idComponente]) => {
+                const config = plantillaComponentes.config_componentes[espacio];
+                return (
+                  <Suspense
+                    key={espacio}
+                    fallback={
+                      <div className="animate-pulse bg-gray-200 rounded-lg p-4">
+                        Cargando...
+                      </div>
+                    }
+                  >
+                    <div
+                      style={{
+                        gridRow: `span ${config?.rowSpan || 1}`,
+                        gridColumn: `span ${config?.colSpan || 1}`,
+                      }}
+                    >
+                      <DynamicComponent
+                        idComponente={idComponente}
+                        cargarComponente={cargarComponente}
+                        config={{
+                          ...config,
+                          data: config?.data || config?.titulo,
+                        }}
+                      />
+                    </div>
+                  </Suspense>
+                );
               }
-            >
-              <DynamicComponent
-                idComponente={plantillaComponentes.footer}
-                cargarComponente={cargarComponente}
-                config={{
-                  localId: localPantalla?.attributes?.local?.data?.id,
-                }}
-              />
-            </Suspense>
-          )}
+            )}
+          </div>
+
+          {/* Footer con ref para medir */}
+          <div
+            className="fixed bottom-0 w-full z-10"
+            ref={(el) => el && setFooterHeight(el?.offsetHeight || 0)}
+          >
+            {plantillaComponentes.footer && (
+              <Suspense
+                fallback={
+                  <div className="animate-pulse bg-gray-200 h-16">
+                    Cargando footer...
+                  </div>
+                }
+              >
+                <DynamicComponent
+                  idComponente={plantillaComponentes.footer}
+                  cargarComponente={cargarComponente}
+                  config={{
+                    localId: localPantalla?.attributes?.local?.data?.id,
+                  }}
+                />
+              </Suspense>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

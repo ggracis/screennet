@@ -67,9 +67,11 @@ export function ProductCard({
   }
 
   return (
-    <Card className="w-full h-full flex flex-col shadow-lg bg-gray-800/[.60]">
+    <Card className="w-full h-full flex flex-col shadow-lg bg-gray-800/10">
       <CardHeader className="flex-none py-1 text-center">
-        <CardTitle className="text-xl">{title}</CardTitle>
+        <CardTitle className="text-nowrap text-2xl titulo text-center uppercase font-normal mt-0 mb-2 ">
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent className="flex-1">
         <Carousel

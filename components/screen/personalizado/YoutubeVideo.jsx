@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 
-const YoutubeVideo = ({ data }) => {
+const YoutubeVideo = ({ titulo, data }) => {
   const iframeRef = useRef(null);
 
   const getVideoId = (url) => {
@@ -56,6 +56,7 @@ const YoutubeVideo = ({ data }) => {
   return (
     <div className="w-full h-full flex items-center justify-center p-1 rounded-lg bg-black">
       <div className="w-full h-full">
+        <h2>{titulo}</h2>
         <iframe
           ref={iframeRef}
           className="w-full h-full"

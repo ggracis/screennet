@@ -4,8 +4,10 @@ import { Suspense, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import useProductStore from "@/stores/useProductStore";
+import ComponenteWrapper from "../screen/ComponenteWrapper";
+import FontLoader from "@/components/ui/FontLoader";
 
-const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
+const PlantillasPreview = ({ plantillaId, plantillaData }) => {
   const [plantilla, setPlantilla] = useState(plantillaData);
   const [componentesCache, setComponentesCache] = useState({});
   const [loading, setLoading] = useState(!plantillaData);
@@ -130,6 +132,36 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
     }
   };
 
+  const renderComponente = (espacio, componente, config) => {
+    if (!componente) return null;
+
+    // Preparar las props incluyendo la configuración
+    const props = {
+      productos: config?.productos || [],
+      titulo: config?.titulo || "",
+      configuracion: {
+        itemsPerPage: config?.itemsPerPage,
+        videoUrl: config?.videoUrl,
+      },
+    };
+
+    return (
+      <div
+        key={espacio}
+        style={{
+          gridRow: `span ${config?.rowSpan || 1}`,
+          gridColumn: `span ${config?.colSpan || 1}`,
+        }}
+        className="relative"
+      >
+        <ComponenteWrapper
+          nombreComponente={getComponentPath(componente)}
+          props={props}
+        />
+      </div>
+    );
+  };
+
   const {
     componentes,
     filas = 1,
@@ -157,82 +189,102 @@ const PlantillasPreview = ({ plantillaId, plantillaData = null }) => {
     zIndex: 1,
   };
 
+  const configuredFonts = [
+    plantilla.attributes.componentes?.config_global?.tipografia?.titulos,
+    plantilla.attributes.componentes?.config_global?.tipografia?.textos,
+  ].filter(Boolean);
+
   return (
-    <div className="w-full h-screen relative overflow-hidden">
-      {/* Fondo */}
-      {fondo1 && (
-        <div className="fixed inset-0 -z-10">
-          {isFondoVideo ? (
-            <video
-              key={fondoUrl}
-              src={fondoUrl}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : isFondoImage ? (
-            <Image
-              src={fondoUrl}
-              alt="Fondo"
-              fill={true}
-              className="absolute inset-0 w-full h-full object-cover"
-              priority={true}
-              sizes="100vw"
-              quality={75}
-            />
-          ) : isFondoStyle ? (
-            <div
-              className="absolute inset-0 w-full h-full"
-              style={{ background: fondo1 }}
-            />
-          ) : null}
-          <div
-            className="absolute inset-0 bg-black"
-            style={{ opacity: overlayOpacity / 100 }}
-          />
-          {/* Overlay opcional */}
-        </div>
-      )}
-
-      {/* Header */}
-      {componentes.header && (
-        <Suspense fallback={<div>Cargando header...</div>}>
-          <DynamicComponent
-            idComponente={componentes.header}
-            cargarComponente={cargarComponente}
-            config={componentes.config_componentes?.header}
-          />
-        </Suspense>
-      )}
-
-      {/* Grid de componentes */}
-      <div style={gridStyle}>
-        {Object.entries(componentes.espacios || {}).map(
-          ([espacio, idComponente]) => (
-            <Suspense key={espacio} fallback={<div>Cargando...</div>}>
-              <DynamicComponent
-                idComponente={idComponente}
-                cargarComponente={cargarComponente}
-                config={componentes.config_componentes?.[espacio]}
+    <>
+      <FontLoader fonts={configuredFonts} />
+      <div
+        className="w-full h-screen relative overflow-hidden"
+        style={{
+          "--font-titulos": `'${
+            plantilla.attributes.componentes?.config_global?.tipografia
+              ?.titulos || "inherit"
+          }', sans-serif`,
+          "--font-textos": `'${
+            plantilla.attributes.componentes?.config_global?.tipografia
+              ?.textos || "inherit"
+          }', sans-serif`,
+        }}
+      >
+        {/* Fondo */}
+        {fondo1 && (
+          <div className="fixed inset-0 -z-10">
+            {isFondoVideo ? (
+              <video
+                key={fondoUrl}
+                src={fondoUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
               />
-            </Suspense>
-          )
+            ) : isFondoImage ? (
+              <Image
+                src={fondoUrl}
+                alt="Fondo"
+                fill={true}
+                className="absolute inset-0 w-full h-full object-cover"
+                priority={true}
+                sizes="100vw"
+                quality={75}
+              />
+            ) : isFondoStyle ? (
+              <div
+                className="absolute inset-0 w-full h-full"
+                style={{ background: fondo1 }}
+              />
+            ) : null}
+            <div
+              className="absolute inset-0 bg-black"
+              style={{ opacity: overlayOpacity / 100 }}
+            />
+            {/* Overlay opcional */}
+          </div>
+        )}
+
+        {/* Header */}
+        {componentes.header && (
+          <Suspense fallback={<div>Cargando header...</div>}>
+            <DynamicComponent
+              idComponente={componentes.header}
+              cargarComponente={cargarComponente}
+              config={componentes.config_componentes?.header}
+            />
+          </Suspense>
+        )}
+
+        {/* Grid de componentes */}
+        <div style={gridStyle}>
+          {Object.entries(componentes.espacios || {}).map(
+            ([espacio, idComponente]) => (
+              <Suspense key={espacio} fallback={<div>Cargando...</div>}>
+                <DynamicComponent
+                  idComponente={idComponente}
+                  cargarComponente={cargarComponente}
+                  config={componentes.config_componentes?.[espacio]}
+                />
+              </Suspense>
+            )
+          )}
+        </div>
+
+        {/* Footer */}
+        {componentes.footer && (
+          <Suspense fallback={<div>Cargando footer...</div>}>
+            <DynamicComponent
+              idComponente={componentes.footer}
+              cargarComponente={cargarComponente}
+              config={componentes.config_componentes?.footer}
+            />
+          </Suspense>
         )}
       </div>
-
-      {/* Footer */}
-      {componentes.footer && (
-        <Suspense fallback={<div>Cargando footer...</div>}>
-          <DynamicComponent
-            idComponente={componentes.footer}
-            cargarComponente={cargarComponente}
-            config={componentes.config_componentes?.footer}
-          />
-        </Suspense>
-      )}
-    </div>
+    </>
   );
 };
 

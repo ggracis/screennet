@@ -1,0 +1,9 @@
+.texto {
+  font-family: var(--font-roboto), sans-serif;
+  letter-spacing: -0.5px;
+}
+
+.titulo {
+  font-family: var(--font-roboto), sans-serif;
+  letter-spacing: -1px;
+}

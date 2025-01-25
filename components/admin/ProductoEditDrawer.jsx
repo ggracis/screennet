@@ -24,6 +24,9 @@ import { useToast } from "@/hooks/use-toast";
 import useProductStore from "@/stores/useProductStore";
 import { Label } from "../ui/label";
 import Image from "next/image";
+import useFormatoMoneda from "@/hooks/useFormatoMoneda";
+import formatoMoneda from "@/hooks/useFormatoMoneda";
+import { formatPrice } from "@/utils/formatters";
 
 export default function ProductoEditDrawer({
   productId,
@@ -46,6 +49,8 @@ export default function ProductoEditDrawer({
   const [precios, setPrecios] = useState({}); // Estado para precios
   const [mediaFiles, setMediaFiles] = useState([]); // Estado para archivos multimedia
   const [isLoading, setIsLoading] = useState(false); // Estado para manejar la carga
+
+  const formatPrice = useFormatoMoneda;
 
   useEffect(() => {
     if (isOpen) {
@@ -356,12 +361,16 @@ export default function ProductoEditDrawer({
     }
   };
 
+  const formatearPrecio = (precio) => {
+    return useFormatoMoneda(precio);
+  };
+
   return (
     <Drawer open={isOpen} onClose={onClose}>
       <DrawerContent>
         <div className="mx-auto w-full max-w-3xl">
           <DrawerHeader>
-            <DrawerTitle>
+            <DrawerTitle className="titulo">
               {isNewProduct
                 ? "Crear nuevo producto"
                 : `Editar ${producto?.attributes.nombre || ""}`}
@@ -407,7 +416,7 @@ export default function ProductoEditDrawer({
                     <SelectContent>
                       <SelectItem value="Kg.">Kg.</SelectItem>
                       <SelectItem value="Unidad">Unidad</SelectItem>
-                      <SelectItem value="Porcion">Porción</SelectItem>
+                      <SelectItem value="Porcion">Porción/Tamaño</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -422,7 +431,7 @@ export default function ProductoEditDrawer({
                       step="0.25"
                       min="0"
                       max="999999.99"
-                      placeholder="0.00"
+                      placeholder={formatearPrecio(0)}
                       inputMode="decimal"
                       defaultValue={precios[titulo] || ""}
                       onChange={(e) => {
@@ -432,6 +441,11 @@ export default function ProductoEditDrawer({
                         }));
                       }}
                     />
+                    {precios[titulo] && (
+                      <div className="text-xs texto text-muted-foreground mt-1">
+                        {formatPrice(precios[titulo])}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

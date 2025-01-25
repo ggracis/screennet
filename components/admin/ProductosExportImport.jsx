@@ -10,13 +10,17 @@ import {
 
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { useToast } from "@/hooks/use-toast";
 
 const ProductosExportImport = ({ isExporting }) => {
+  const { toast } = useToast();
+
   const fileInputRef = useRef(null);
   const [categorias, setCategorias] = useState([]);
   const [subcategorias, setSubcategorias] = useState([]);
   const [importedData, setImportedData] = useState([]);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+  const [importStats, setImportStats] = useState({ success: 0, failed: 0 });
 
   // Agregar estado para almacenar las categorías procesadas
   const [categoriasMap, setCategoriasMap] = useState({});
@@ -59,6 +63,7 @@ const ProductosExportImport = ({ isExporting }) => {
         return ["C/U", "1/2 Doc.", "1 Doc."];
       case "Porcion":
         return ["Chico", "Mediano", "Grande"];
+
       default:
         return ["Precio 1", "Precio 2", "Precio 3"];
     }
@@ -170,6 +175,8 @@ const ProductosExportImport = ({ isExporting }) => {
     console.log("=== INICIO IMPORTACIÓN DE PRODUCTOS ===");
     console.log("Categorías disponibles:", categorias);
     console.log("Subcategorías disponibles:", subcategorias);
+    let successCount = 0;
+    let failedCount = 0;
 
     for (const product of products) {
       try {
@@ -224,12 +231,15 @@ const ProductosExportImport = ({ isExporting }) => {
         });
 
         const responseData = await response.json();
-        console.log("Respuesta completa de la API:", responseData);
 
-        if (!response.ok) {
-          throw new Error(responseData.error || "Error al importar producto");
+        if (response.ok) {
+          successCount++;
+        } else {
+          failedCount++;
+          console.error("Error importando producto:", responseData);
         }
       } catch (error) {
+        failedCount++;
         console.error("Error importando producto:", error);
         console.error("Detalles del error:", {
           mensaje: error.message,
@@ -237,7 +247,18 @@ const ProductosExportImport = ({ isExporting }) => {
         });
       }
     }
+
+    setImportStats({ success: successCount, failed: failedCount });
+    toast({
+      title: "Importación completada",
+      description: `Se importaron ${successCount} productos correctamente${
+        failedCount > 0 ? ` (${failedCount} fallidos)` : ""
+      }`,
+    });
+
     console.log("=== FIN IMPORTACIÓN DE PRODUCTOS ===");
+    console.log(`Productos importados: ${successCount}`);
+    console.log(`Productos fallidos: ${failedCount}`);
   };
 
   return (
@@ -321,15 +342,27 @@ const ProductosExportImport = ({ isExporting }) => {
             </table>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsPreviewVisible(false)}
-            >
-              Cancelar
-            </Button>
-            <Button className="ml-2" onClick={handleConfirmImport}>
-              Confirmar Importación
-            </Button>
+            <div className="flex w-full justify-between items-center">
+              <div className="text-sm text-muted-foreground">
+                {importStats.success > 0 || importStats.failed > 0 ? (
+                  <span>
+                    Última importación: {importStats.success} exitosos,{" "}
+                    {importStats.failed} fallidos
+                  </span>
+                ) : null}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsPreviewVisible(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={handleConfirmImport}>
+                  Confirmar Importación
+                </Button>
+              </div>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -3,6 +3,7 @@
 import { memo, useMemo, useEffect, useState } from "react";
 import { useProducts } from "@/hooks/useProducts";
 import { ProductCard } from "../ProductCard";
+import { formatPrice } from "@/utils/formatters";
 
 const Simple2 = memo(({ productos, titulo, rowSpan = 1 }) => {
   const [cachedProducts, setCachedProducts] = useState({});
@@ -36,9 +37,9 @@ const Simple2 = memo(({ productos, titulo, rowSpan = 1 }) => {
         {displayProducts.map((product) => (
           <div
             key={`${product.id}-${product.attributes?.updatedAt}`}
-            className="flex flex-col items-center p-2 rounded-lg bg-gray-800/40"
+            className="flex flex-col items-center p-2 rounded-lg bg-gray-800/20"
           >
-            <h2 className="text-xl font-bold mb-2 text-center">
+            <h2 className="text-xl texto font-bold mb-2 text-center leading-5">
               {product.attributes.nombre}
             </h2>
             <div className="flex flex-wrap justify-center gap-2">
@@ -47,11 +48,11 @@ const Simple2 = memo(({ productos, titulo, rowSpan = 1 }) => {
                 .map(([titulo, precio]) => (
                   <div
                     key={`${product.id}-${titulo}`}
-                    className="p-1 bg-gray-700/50 rounded-md"
+                    className="p-1 bg-gray-700/30 rounded-md"
                   >
                     <span className="text-gray-300">{titulo}: </span>
-                    <span className="text-xl font-bold text-white">
-                      ${precio}
+                    <span className="text-xl texto font-bold text-white">
+                      {formatPrice(precio)}
                     </span>
                   </div>
                 ))}

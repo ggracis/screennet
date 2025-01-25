@@ -2,6 +2,13 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import useProductStore from "@/stores/useProductStore";
+import useFormatoMoneda from "@/hooks/useFormatoMoneda";
+import formatoMoneda from "@/hooks/useFormatoMoneda";
+import {
+  formatPrice,
+  formatCompactPrice,
+  getPrecioOrdenado,
+} from "@/utils/formatters";
 
 import {
   flexRender,
@@ -206,6 +213,26 @@ export default function ProductosLista() {
     fetchProductos(1);
   }, []);
 
+  const getPrecioOrdenado = (precios, unidadMedida, orden) => {
+    const ordenPrecios = {
+      "Kg.": ["1/4 Kg.", "1/2 Kg.", "1 Kg."],
+      Unidad: ["C/U", "1/2 Doc.", "1 Doc."],
+      Porcion: ["Chico", "Mediano", "Grande"],
+    };
+
+    if (!precios || !unidadMedida) return "N/A";
+    const titulos = ordenPrecios[unidadMedida] || [];
+    return precios[titulos[orden]] || "N/A";
+  };
+
+  const formatearPrecio = (precio) => {
+    return useFormatoMoneda(precio, {
+      notation: "compact",
+    });
+  };
+
+  const formatPrice = useFormatoMoneda;
+
   const columns = [
     {
       id: "select",
@@ -274,31 +301,73 @@ export default function ProductosLista() {
     },
     {
       id: "precio1",
-      header: "Precio 1",
-      accessorFn: (row) => Object.values(row.attributes.precios)[0] || "N/A", // Accede al primer precio
+      header: ({ row }) => "Precio 1",
+      accessorFn: (row) =>
+        getPrecioOrdenado(
+          row.attributes.precios,
+          row.attributes.unidadMedida,
+          0
+        ),
       cell: ({ row }) => (
-        <div className="w-[50px] text-right">
-          {Object.values(row.attributes.precios)[0] || "N/A"}
+        <div
+          className="w-[50px] text-right"
+          title={getTituloPrecio(row.attributes.unidadMedida, 0)}
+        >
+          {formatCompactPrice(
+            getPrecioOrdenado(
+              row.attributes.precios,
+              row.attributes.unidadMedida,
+              0
+            )
+          )}
         </div>
       ),
     },
     {
       id: "precio2",
-      header: "Precio 2",
-      accessorFn: (row) => Object.values(row.attributes.precios)[1] || "N/A", // Accede al segundo precio
+      header: ({ row }) => "Precio 2",
+      accessorFn: (row) =>
+        getPrecioOrdenado(
+          row.attributes.precios,
+          row.attributes.unidadMedida,
+          1
+        ),
       cell: ({ row }) => (
-        <div className="w-[50px] text-right">
-          {Object.values(row.attributes.precios)[1] || "N/A"}
+        <div
+          className="w-[50px] text-right"
+          title={getTituloPrecio(row.attributes.unidadMedida, 1)}
+        >
+          {formatearPrecio(
+            getPrecioOrdenado(
+              row.attributes.precios,
+              row.attributes.unidadMedida,
+              1
+            )
+          )}
         </div>
       ),
     },
     {
       id: "precio3",
-      header: "Precio 3",
-      accessorFn: (row) => Object.values(row.attributes.precios)[2] || "N/A", // Accede al tercer precio
+      header: ({ row }) => "Precio 3",
+      accessorFn: (row) =>
+        getPrecioOrdenado(
+          row.attributes.precios,
+          row.attributes.unidadMedida,
+          2
+        ),
       cell: ({ row }) => (
-        <div className="w-[50px] text-right">
-          {Object.values(row.attributes.precios)[2] || "N/A"}
+        <div
+          className="w-[50px] text-right"
+          title={getTituloPrecio(row.attributes.unidadMedida, 2)}
+        >
+          {formatearPrecio(
+            getPrecioOrdenado(
+              row.attributes.precios,
+              row.attributes.unidadMedida,
+              2
+            )
+          )}
         </div>
       ),
     },
@@ -349,6 +418,15 @@ export default function ProductosLista() {
       ),
     },
   ];
+
+  const getTituloPrecio = (unidadMedida, orden) => {
+    const titulos = {
+      "Kg.": ["1/4 Kg.", "1/2 Kg.", "1 Kg."],
+      Unidad: ["C/U", "1/2 Doc.", "1 Doc."],
+      Porcion: ["Chico", "Mediano", "Grande"],
+    };
+    return titulos[unidadMedida]?.[orden] || `Precio ${orden + 1}`;
+  };
 
   // Actualiza la función fetchProductos para incluir filtros
   const fetchProductos = async (page = 1, search = searchTerm) => {
@@ -952,6 +1030,11 @@ export default function ProductosLista() {
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Se eliminarán permanentemente
               TODOS los productos de la base de datos.
+              <br />
+              <span className="text-red-500">
+                Los productos que se encuentran en plantillas deberán ser
+                reemplazados manualmente.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

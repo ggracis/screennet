@@ -17,6 +17,19 @@ import { GradientPicker } from "../ui/GradientPicker";
 import dynamic from "next/dynamic";
 import ComponenteSelector from "./ComponenteSelector";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import FontSelector from "../ui/FontSelector";
+
 const PlantillasEditor = ({ isNewPlantilla }) => {
   const router = useRouter();
   const params = useParams();
@@ -52,6 +65,8 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
   const [selectedHeader, setSelectedHeader] = useState(null);
   const [selectedFooter, setSelectedFooter] = useState(null);
   const [cachedProducts, setCachedProducts] = useState({});
+  const [titleFont, setTitleFont] = useState("");
+  const [textFont, setTextFont] = useState("");
 
   const determineMediaType = (url) => {
     if (!url) return null;
@@ -180,6 +195,12 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         );
         setSelectedHeader(headerComp || null);
         setSelectedFooter(footerComp || null);
+        setTitleFont(
+          plantillaData.componentes?.config_global?.tipografia?.titulos || ""
+        );
+        setTextFont(
+          plantillaData.componentes?.config_global?.tipografia?.textos || ""
+        );
       } else {
         throw new Error("Datos de plantilla no encontrados");
       }
@@ -710,52 +731,71 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
     );
   };
 
-  const renderComponenteConfig = (index, componente) => {
-    // Buscar la configuración del componente en la lista de componentes
-    const componenteInfo = componentes.find((c) => c.id === componente);
-
+  const renderComponenteConfig = (index, componenteId) => {
+    // Buscar la información del componente
+    const componenteInfo = componentes.find((c) => c.id === componenteId);
     if (!componenteInfo) return null;
 
-    // Si es un componente personalizado
-    if (componenteInfo.attributes.categoria === "Personalizado") {
-      const config = componenteInfo.attributes.configuracion;
-      return (
-        <div className="space-y-4">
-          <div>
-            <Label>{config.titulo}</Label>
-            <Input
-              type="text"
-              value={configComponentes[index]?.data || ""}
-              onChange={(e) =>
-                handleConfigChange(index, "data", e.target.value)
-              }
-            />
-          </div>
-        </div>
-      );
-    }
+    const configInicial = configComponentes[index] || {};
+    const configComponente = componenteInfo.attributes.configuracion;
 
-    // Si es un componente regular, mostrar los campos estándar
     return (
       <div className="space-y-4">
+        {/* Campos comunes */}
         <div>
           <Label>Título</Label>
           <Input
-            value={configComponentes[index]?.titulo || ""}
+            value={configInicial.titulo || ""}
             onChange={(e) =>
               handleConfigChange(index, "titulo", e.target.value)
             }
           />
         </div>
-        <div>
-          <Label>Productos</Label>
-          <ProductosBuscador
-            selectedProducts={configComponentes[index]?.productos || []}
-            onChange={(productos) =>
-              handleConfigChange(index, "productos", productos)
-            }
-          />
-        </div>
+
+        {/* Configuración específica del componente */}
+        {configComponente && (
+          <div>
+            <Label>{configComponente.titulo || "Configuración"}</Label>
+            {componenteInfo.attributes.nombre === "YoutubeVideo" && (
+              <Input
+                type="text"
+                value={configInicial.data || ""}
+                onChange={(e) =>
+                  handleConfigChange(index, "data", e.target.value)
+                }
+                placeholder="https://youtube.com/..."
+              />
+            )}
+            {componenteInfo.attributes.nombre === "Galeria3" && (
+              <Input
+                type="number"
+                min="1"
+                max="6"
+                value={configInicial.data || 4}
+                onChange={(e) =>
+                  handleConfigChange(
+                    index,
+                    "data",
+                    parseInt(e.target.value) || 4
+                  )
+                }
+              />
+            )}
+          </div>
+        )}
+
+        {/* Selector de productos si no es un componente personalizado */}
+        {componenteInfo.attributes.categoria !== "Personalizado" && (
+          <div>
+            <Label>Productos</Label>
+            <ProductosBuscador
+              selectedProducts={configInicial.productos || []}
+              onChange={(productos) =>
+                handleConfigChange(index, "productos", productos)
+              }
+            />
+          </div>
+        )}
       </div>
     );
   };
@@ -771,6 +811,13 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
           footer: selectedFooter?.id || null,
           espacios,
           config_componentes: configComponentes,
+          // Agregar configuración de tipografía dentro del objeto componentes
+          config_global: {
+            tipografia: {
+              titulos: titleFont,
+              textos: textFont,
+            },
+          },
         },
         columnas,
         filas,
@@ -846,16 +893,66 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
     });
   };
 
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/plantillas/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al eliminar la plantilla");
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Plantilla eliminada correctamente",
+      });
+
+      router.push("/admin/plantillas");
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la plantilla",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) return <p>Cargando...</p>;
 
   return (
     <>
       <div className="p-6 rounded-lg shadow-md gap-4">
-        <h2 className="text-2xl font-bold mb-4">
-          {isNewPlantilla
-            ? "Crear Nueva Plantilla"
-            : `Editar Plantilla: ${nombre}`}
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">
+            {isNewPlantilla
+              ? "Crear Nueva Plantilla"
+              : `Editar Plantilla: ${nombre}`}
+          </h2>
+          {!isNewPlantilla && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">Eliminar Plantilla</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. Se eliminará
+                    permanentemente la plantilla.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex gap-4">
             <div className="w-1/2">
@@ -902,6 +999,12 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
                                 footer: footerComponente,
                                 espacios,
                                 config_componentes: configComponentes,
+                                config_global: {
+                                  tipografia: {
+                                    titulos: titleFont,
+                                    textos: textFont,
+                                  },
+                                },
                               },
                               fondo: selectedImage
                                 ? {
@@ -927,7 +1030,23 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
               </div>
             </div>
 
-            <div className="w-2/6 ">
+            <div className="w-2/6 space-y-4">
+              <div className="flex gap-4">
+                <div className="w-1/2">
+                  <FontSelector
+                    label="Fuente para títulos"
+                    value={titleFont}
+                    onValueChange={setTitleFont}
+                  />
+                </div>
+                <div className="w-1/2">
+                  <FontSelector
+                    label="Fuente para textos"
+                    value={textFont}
+                    onValueChange={setTextFont}
+                  />
+                </div>
+              </div>
               <div className="flex  gap-4">
                 <div className="w-1/2">
                   <Label className="block mb-2">Header:</Label>
@@ -1074,6 +1193,7 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
                 />
               </div>
             </div>
+
             <div>{renderGridPreview()}</div>
           </div>
 

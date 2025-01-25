@@ -107,3 +107,31 @@ export async function PUT(request, { params }) {
     );
   }
 }
+
+export async function DELETE(request, { params }) {
+  const { id } = params;
+
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/plantillas/${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error al eliminar: ${response.status}`);
+    }
+
+    return NextResponse.json({ message: "Plantilla eliminada correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar la plantilla:", error);
+    return NextResponse.json(
+      { error: "Error al eliminar la plantilla" },
+      { status: 500 }
+    );
+  }
+}

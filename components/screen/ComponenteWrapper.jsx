@@ -30,7 +30,19 @@ const ComponenteWrapper = ({ nombreComponente, props = {} }) => {
 
   if (!Componente) return null;
 
-  return <Componente {...props} />;
+  // Extraer configuración genérica
+  const componentConfig = {};
+  if (props.configuracion?.data !== undefined) {
+    componentConfig.data = props.configuracion.data;
+  }
+
+  // Combinar props base con la configuración
+  const finalProps = {
+    ...props,
+    ...componentConfig,
+  };
+
+  return <Componente {...finalProps} />;
 };
 
 export default ComponenteWrapper;

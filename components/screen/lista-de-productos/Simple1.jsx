@@ -4,6 +4,7 @@ import { memo, useMemo, useEffect, useState } from "react";
 import { useProducts } from "@/hooks/useProducts";
 import { ProductCard } from "../ProductCard";
 import { Separator } from "@/components/ui/separator";
+import { formatPrice } from "@/utils/formatters";
 
 const Simple1 = memo(({ productos, titulo, rowSpan = 1 }) => {
   const [cachedProducts, setCachedProducts] = useState({});
@@ -37,7 +38,7 @@ const Simple1 = memo(({ productos, titulo, rowSpan = 1 }) => {
         {displayProducts.map((product, index) => (
           <div key={`${product.id}-${product.attributes?.updatedAt}`}>
             <div className="flex justify-between items-center py-1">
-              <div className="text-md font-semibold">
+              <div className="text-md texto font-bold leading-5">
                 {product.attributes.nombre}
               </div>
               <div className="flex gap-2">
@@ -49,7 +50,9 @@ const Simple1 = memo(({ productos, titulo, rowSpan = 1 }) => {
                       className="flex items-center gap-1"
                     >
                       <span className="text-gray-300 text-sm">{titulo}:</span>
-                      <span className="text-md font-bold">${precio}</span>
+                      <span className="text-md texto font-bold">
+                        {formatPrice(precio)}
+                      </span>
                     </div>
                   ))}
               </div>

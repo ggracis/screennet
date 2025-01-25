@@ -112,3 +112,11 @@ body {
 [data-radix-popper-content-wrapper] {
   z-index: 9999 !important;
 }
+
+.titulo {
+  font-family: var(--font-titulos, inherit);
+}
+
+.texto {
+  font-family: var(--font-textos, inherit);
+}

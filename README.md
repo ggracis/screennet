@@ -39,12 +39,16 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
   
 
 ### Plantillas
-- [✔️] CRUD de plantillas
+  - [✔️] CRUD de plantillas
   - [✔️] Crear un sistema de edición para las plantillas (asignando productos a plantillas)
   - [❌] Modo pantalla completa
   - [❌] Transiciones entre contenidos
   - [❌] Poder elegir modo claro o oscuro
   - [✔️] Mostrar vista previa de cada componente (resuelto con un popover)
+  - [✔️] Elegir tipografía para titulos y texto de la plantilla
+  - [❌] Elegir colores para la tipografía y fondos de componentes
+  - [❌] Drag and drop de componentes en el grid
+  - [❌] Poder establecer mejor el tamaño de los componentes
 
 
 ### Locales

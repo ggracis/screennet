@@ -87,7 +87,7 @@ const ComponenteSelector = ({
           >
             {selectedComponente
               ? selectedComponente.attributes.nombre
-              : "Seleccionar un componente..."}
+              : "Seleccionar..."}
             <ChevronsUpDown className="opacity-50" />
           </Button>
         </PopoverTrigger>
