@@ -362,7 +362,7 @@ export default function ProductoEditDrawer({
   };
 
   const formatearPrecio = (precio) => {
-    return useFormatoMoneda(precio);
+    return formatoMoneda(precio);
   };
 
   return (

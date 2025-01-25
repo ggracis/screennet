@@ -225,13 +225,7 @@ export default function ProductosLista() {
     return precios[titulos[orden]] || "N/A";
   };
 
-  const formatearPrecio = (precio) => {
-    return useFormatoMoneda(precio, {
-      notation: "compact",
-    });
-  };
-
-  const formatPrice = useFormatoMoneda;
+  const formatearPrecio = formatoMoneda;
 
   const columns = [
     {
