@@ -34,11 +34,14 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log("🎬 Iniciando carga de pantalla...");
       if (plantillaPreview) {
+        console.log("👁️ Modo preview activado");
         setLocalPlantilla(plantillaPreview);
         setLoading(false);
       } else if (pantallaId) {
         try {
+          console.log(`🔍 Buscando pantalla ID: ${pantallaId}`);
           const response = await fetch(`/api/pantallas/${pantallaId}`);
           const data = await response.json();
 
@@ -68,12 +71,16 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
           }
           setLocalPlantilla(plantilla);
 
+          console.log("✅ Pantalla cargada correctamente");
+
           if (products.length === 0) {
+            console.log("📦 Solicitando carga inicial de productos");
             await fetchAllProducts();
           }
+
           initializePolling();
         } catch (err) {
-          console.error("Error fetching screen data:", err);
+          console.error("❌ Error cargando pantalla:", err.message);
           setError(err.message);
         } finally {
           setLoading(false);
@@ -84,6 +91,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
     fetchData();
 
     return () => {
+      console.log("🧹 Limpiando recursos de pantalla");
       cleanupProducts();
     };
   }, [
@@ -376,9 +384,15 @@ const DynamicComponent = ({ idComponente, cargarComponente, config = {} }) => {
   useEffect(() => {
     const cargar = async () => {
       try {
+        console.log(`🧩 Cargando componente: ${idComponente}`);
         const ComponenteCargado = await cargarComponente(idComponente);
         setComponente(() => ComponenteCargado);
+        console.log(`✅ Componente ${idComponente} cargado`);
       } catch (err) {
+        console.error(
+          `❌ Error cargando componente ${idComponente}:`,
+          err.message
+        );
         setError(err);
       }
     };

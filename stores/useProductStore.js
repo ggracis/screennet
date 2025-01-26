@@ -25,17 +25,27 @@ const useProductStore = create(
 
       // Métodos principales con mejor manejo de errores
       fetchAllProducts: async () => {
+        console.log("🔄 Iniciando carga de productos...");
         try {
           set({ loading: true, error: null });
+          const baseUrl = process.env.NEXT_PUBLIC_STRAPI_URL;
+          const token = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
+
+          // Mejor manejo de configuración
+          if (!baseUrl || !token) {
+            console.error("Configuration check:", {
+              hasUrl: !!baseUrl,
+              hasToken: !!token,
+              url: baseUrl,
+            });
+            throw new Error(
+              "Missing API configuration - Check environment variables"
+            );
+          }
+
           let allProducts = [];
           let page = 1;
           let hasMore = true;
-          const baseUrl = process.env.NEXT_PUBLIC_STRAPI_URL || "";
-          const token = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
-
-          if (!baseUrl || !token) {
-            throw new Error("Missing API configuration");
-          }
 
           // Bucle para obtener todas las páginas de productos
           while (hasMore) {
@@ -72,6 +82,7 @@ const useProductStore = create(
             page++;
           }
 
+          console.log(`📦 Productos cargados: ${allProducts.length}`);
           // Actualiza el store con los productos obtenidos
           set({
             products: allProducts,
@@ -82,10 +93,15 @@ const useProductStore = create(
 
           return allProducts;
         } catch (error) {
-          console.error("Error fetching all products:", error);
+          console.error("❌ Error cargando productos:", error.message);
+          console.error("Detailed error:", {
+            message: error.message,
+            stack: error.stack,
+            env: process.env.NODE_ENV,
+          });
           set({
             loading: false,
-            error: error.message || "Error fetching products",
+            error: error.message,
           });
           return [];
         }
@@ -123,11 +139,11 @@ const useProductStore = create(
 
       // Inicializa el polling para actualizaciones automáticas
       initializePolling: () => {
-        console.log("Initializing polling");
+        console.log("⏰ Iniciando polling de productos");
         if (typeof window !== "undefined") {
           const fetchUpdatedProducts = async () => {
-            // Función interna para verificar actualizaciones
             try {
+              console.log("🔍 Verificando actualizaciones...");
               const response = await fetch(
                 `/api/productos/actualizados?lastUpdate=${get().lastUpdate}`,
                 {
@@ -140,6 +156,7 @@ const useProductStore = create(
               const { data } = await response.json();
 
               if (data && data.length > 0) {
+                console.log(`🔄 Actualizando ${data.length} productos`);
                 set((state) => ({
                   products: state.products.map((product) => {
                     const updated = data.find((p) => p.id === product.id);
@@ -149,7 +166,7 @@ const useProductStore = create(
                 }));
               }
             } catch (error) {
-              console.error("Error polling updates:", error);
+              console.error("❌ Error en polling:", error.message);
             }
           };
 
@@ -163,6 +180,7 @@ const useProductStore = create(
 
       // Limpia el intervalo de polling cuando se desmonta el componente
       cleanup: () => {
+        console.log("🧹 Limpiando polling de productos");
         const { pollingInterval } = get();
         if (pollingInterval) {
           clearInterval(pollingInterval);
