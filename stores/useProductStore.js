@@ -1,26 +1,43 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 
-const POLLING_INTERVAL = 60000; // 1 minute
-const PAGE_SIZE = 100; // Ajustado para mejor rendimiento
+// Constantes de configuración
+const POLLING_INTERVAL = 60000;
+const PAGE_SIZE = 100;
+
+// Validación de respuesta API
+const validateApiResponse = (data) => {
+  if (!Array.isArray(data)) {
+    throw new Error("Invalid API response format");
+  }
+  return data;
+};
 
 const useProductStore = create(
   persist(
     (set, get) => ({
+      // Estado inicial
       products: [],
       lastUpdate: Date.now(),
       pollingInterval: null,
       loading: false,
+      error: null,
 
+      // Métodos principales con mejor manejo de errores
       fetchAllProducts: async () => {
         try {
-          set({ loading: true });
+          set({ loading: true, error: null });
           let allProducts = [];
           let page = 1;
           let hasMore = true;
           const baseUrl = process.env.NEXT_PUBLIC_STRAPI_URL || "";
           const token = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
 
+          if (!baseUrl || !token) {
+            throw new Error("Missing API configuration");
+          }
+
+          // Bucle para obtener todas las páginas de productos
           while (hasMore) {
             const response = await fetch(
               `${baseUrl}/api/productos?pagination[page]=${page}&pagination[pageSize]=${PAGE_SIZE}&populate=*`,
@@ -55,37 +72,62 @@ const useProductStore = create(
             page++;
           }
 
+          // Actualiza el store con los productos obtenidos
           set({
             products: allProducts,
             lastUpdate: Date.now(),
             loading: false,
+            error: null,
           });
 
           return allProducts;
         } catch (error) {
           console.error("Error fetching all products:", error);
-          set({ loading: false });
+          set({
+            loading: false,
+            error: error.message || "Error fetching products",
+          });
           return [];
         }
       },
 
+      // Método para forzar actualización de todos los productos
+      refreshProducts: async () => {
+        try {
+          set({ loading: true, error: null });
+          const products = await get().fetchAllProducts();
+          return products;
+        } catch (error) {
+          console.error("Error refreshing products:", error);
+          return [];
+        } finally {
+          set({ loading: false });
+        }
+      },
+
+      // Obtiene un producto específico por ID
       getProduct: (id) => {
         return get().products.find((product) => product.id === id);
       },
 
+      // Métodos de búsqueda optimizados
       searchProducts: (term) => {
         const products = get().products;
-        if (!term) return products;
+        if (!term?.trim()) return products;
+
+        const searchTerm = term.toLowerCase().trim();
         return products.filter((product) =>
-          product.attributes.nombre.toLowerCase().includes(term.toLowerCase())
+          product?.attributes?.nombre?.toLowerCase().includes(searchTerm)
         );
       },
 
+      // Inicializa el polling para actualizaciones automáticas
       initializePolling: () => {
+        console.log("Initializing polling");
         if (typeof window !== "undefined") {
           const fetchUpdatedProducts = async () => {
+            // Función interna para verificar actualizaciones
             try {
-              const baseUrl = process.env.NEXT_PUBLIC_STRAPI_URL || "";
               const response = await fetch(
                 `/api/productos/actualizados?lastUpdate=${get().lastUpdate}`,
                 {
@@ -119,6 +161,7 @@ const useProductStore = create(
         }
       },
 
+      // Limpia el intervalo de polling cuando se desmonta el componente
       cleanup: () => {
         const { pollingInterval } = get();
         if (pollingInterval) {
@@ -127,15 +170,22 @@ const useProductStore = create(
         }
       },
 
+      // Verifica si los datos están desactualizados
       isStale: () => Date.now() - get().lastUpdate > POLLING_INTERVAL,
 
+      // Establece la lista completa de productos
       setProducts: (products) =>
         set({
           products,
           lastUpdate: Date.now(),
         }),
 
-      addProduct: (product) =>
+      // Agrega o actualiza un único producto
+      addProduct: (product) => {
+        if (!product?.id) {
+          console.error("Invalid product data");
+          return;
+        }
         set((state) => {
           const index = state.products.findIndex((p) => p.id === product.id);
           if (index !== -1) {
@@ -150,8 +200,10 @@ const useProductStore = create(
             products: [...state.products, product],
             lastUpdate: Date.now(),
           };
-        }),
+        });
+      },
 
+      // Agrega múltiples productos evitando duplicados
       addManyProducts: (newProducts) =>
         set((state) => {
           const uniqueProducts = newProducts.filter(
@@ -163,7 +215,12 @@ const useProductStore = create(
           };
         }),
 
-      updateProduct: (updatedProduct) =>
+      // Actualiza un producto existente
+      updateProduct: (updatedProduct) => {
+        if (!updatedProduct?.id) {
+          console.error("Invalid product data for update");
+          return;
+        }
         set((state) => ({
           products: state.products.map((product) =>
             product.id === updatedProduct.id
@@ -178,8 +235,10 @@ const useProductStore = create(
               : product
           ),
           lastUpdate: Date.now(),
-        })),
+        }));
+      },
 
+      // Elimina un producto por ID
       deleteProduct: (productId) =>
         set((state) => ({
           products: state.products.filter(
@@ -188,6 +247,7 @@ const useProductStore = create(
           lastUpdate: Date.now(),
         })),
 
+      // Limpia datos desactualizados
       clearStaleData: () => {
         if (get().isStale()) {
           set({ products: [], lastUpdate: Date.now() });
@@ -196,9 +256,20 @@ const useProductStore = create(
         return false;
       },
 
+      // Mejorar fetchProductsByIds para intentar fetchAll si no encuentra productos
       fetchProductsByIds: async (ids) => {
         try {
-          const idsString = ids.join(",");
+          const existingProducts = get().products;
+          const missingProducts = ids.filter(
+            (id) => !existingProducts.find((p) => p.id === id)
+          );
+
+          if (missingProducts.length === 0) {
+            return existingProducts.filter((p) => ids.includes(p.id));
+          }
+
+          // Intentar primero obtener solo los productos faltantes
+          const idsString = missingProducts.join(",");
           const response = await fetch(
             `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/productos?filters[id][$in]=${idsString}&populate=*`,
             {
@@ -209,19 +280,26 @@ const useProductStore = create(
           );
           const { data } = await response.json();
 
-          if (Array.isArray(data)) {
-            set((state) => ({
-              products: [...state.products, ...data],
-            }));
+          if (!data || data.length < missingProducts.length) {
+            // Si no se encuentran todos los productos, refrescar todo el catálogo
+            return await get().refreshProducts();
           }
+
+          set((state) => ({
+            products: [...state.products, ...data],
+            lastUpdate: Date.now(),
+          }));
+
+          return get().products.filter((p) => ids.includes(p.id));
         } catch (error) {
-          console.error("Error fetching products by IDs:", error);
+          console.error("Error fetching specific products:", error);
+          return await get().refreshProducts(); // Fallback a refresh completo
         }
       },
     }),
     {
       name: "product-storage",
-      storage: createJSONStorage(() => localStorage),
+      version: 1,
     }
   )
 );

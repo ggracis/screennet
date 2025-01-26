@@ -17,6 +17,42 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
 - Strapi
 - ShadCN
 
+## ¿Cómo funciona el manejo de los productos?
+
+El sistema de gestión de productos utiliza una arquitectura centralizada con las siguientes características:
+
+### Almacenamiento y Estado
+- Utiliza Zustand como gestor de estado global
+- Implementa persistencia local mediante localStorage
+- Mantiene un caché de productos para optimizar el rendimiento
+
+### Flujo de Datos
+1. **Obtención Inicial**:
+   - Los productos se cargan desde Strapi API al montar la aplicación
+   - Se implementa paginación (100 items por página) para manejar grandes cantidades de datos
+   - Los datos se almacenan en el store de Zustand y se persisten en localStorage
+
+2. **Actualización Automática**:
+   - Sistema de polling cada 60 segundos
+   - Verifica cambios en productos consultando solo los actualizados desde última sincronización
+   - Actualización selectiva de productos modificados para optimizar rendimiento
+
+3. **Manejo de Componentes**:
+   - Los componentes acceden a los productos a través de ProductContext
+   - Context Provider envuelve la aplicación proporcionando acceso uniforme a los datos
+   - Implementa estados de carga y error unificados
+
+4. **Estrategia de Fallback**:
+   - Si un producto no se encuentra en caché, intenta obtenerlo individualmente
+   - Si falla, recurre a una actualización completa del catálogo
+   - Sistema de reintentos automáticos para garantizar consistencia
+
+5. **Optimizaciones**:
+   - Caché local para reducir llamadas a API
+   - Actualizaciones selectivas para minimizar transferencia de datos
+   - Manejo de errores robusto con estados de fallback
+   - Limpieza automática de datos obsoletos
+
 ## En desarrollo:
 ### Productos
 - [✔️] CRUD de productos
@@ -49,6 +85,7 @@ Permite a los comercios mostrar sus productos y servicios, con la posibilidad de
   - [❌] Elegir colores para la tipografía y fondos de componentes
   - [❌] Drag and drop de componentes en el grid
   - [❌] Poder establecer mejor el tamaño de los componentes
+  - [❌] Bug que permite componentes de más filas de las permitidas
 
 
 ### Locales

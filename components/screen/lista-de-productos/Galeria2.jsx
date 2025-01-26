@@ -6,28 +6,22 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import useProductStore from "@/stores/useProductStore";
+import { useProductContext } from "@/contexts/ProductContext";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
 const Galeria2 = ({ productos: productosIds = [] }) => {
-  const { products, fetchAllProducts, loading } = useProductStore();
+  const { products, loading, error } = useProductContext();
   const [filteredProducts, setFilteredProducts] = useState([]);
 
   useEffect(() => {
-    if (products.length === 0) {
-      fetchAllProducts();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (productosIds.length > 0 && products.length > 0) {
+    if (products.length > 0 && productosIds.length > 0) {
       const ordered = productosIds
         .map((id) => products.find((p) => p.id === id))
         .filter(Boolean);
       setFilteredProducts(ordered);
     }
-  }, [productosIds, products]);
+  }, [products, productosIds]);
 
   const procesarMedios = (producto) => {
     const medios = [];
@@ -50,7 +44,15 @@ const Galeria2 = ({ productos: productosIds = [] }) => {
   };
 
   if (loading) {
-    return <div>Cargando productos...</div>;
+    return (
+      <div className="animate-pulse bg-gray-200 rounded p-4">
+        Cargando productos...
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
   }
 
   if (!filteredProducts.length) {

@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/carousel";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import Autoplay from "embla-carousel-autoplay";
-import useProductStore from "@/stores/useProductStore";
+import { useProductContext } from "@/contexts/ProductContext";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import formatoMoneda from "@/hooks/useFormatoMoneda";
@@ -17,17 +17,11 @@ const Galeria3 = ({
   titulo,
   data = 4, // Ahora usamos data en lugar de itemsPerPage
 }) => {
-  const { products, fetchAllProducts, loading } = useProductStore();
+  const { products, loading, error } = useProductContext();
   const [filteredProducts, setFilteredProducts] = useState([]);
 
   useEffect(() => {
-    if (products.length === 0) {
-      fetchAllProducts();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (productosIds.length > 0 && products.length > 0) {
+    if (products.length > 0 && productosIds.length > 0) {
       const ordered = productosIds
         .map((id) => products.find((p) => p.id === id))
         .filter(Boolean);
@@ -63,6 +57,19 @@ const Galeria3 = ({
             <div className="h-4 bg-gray-200 rounded w-full"></div>
             <div className="h-4 bg-gray-200 rounded w-full"></div>
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full h-full">
+        <CardHeader>
+          <CardTitle className="text-red-600">Error</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-red-500">{error}</p>
         </CardContent>
       </Card>
     );

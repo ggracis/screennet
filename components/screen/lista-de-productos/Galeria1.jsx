@@ -1,41 +1,28 @@
 //components\screen\lista-de-productos\Galeria1.jsx
 "use client";
 
+import { useProductContext } from "@/contexts/ProductContext";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import useProductStore from "@/stores/useProductStore";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
 const Galeria1 = ({ productos: productosIds = [] }) => {
-  const [cachedProducts, setCachedProducts] = useState({});
-  const { products, fetchProductsByIds } = useProductStore();
+  const { products, loading, error } = useProductContext();
   const [filteredProducts, setFilteredProducts] = useState([]);
 
   useEffect(() => {
-    const loadProducts = async () => {
-      if (productosIds.length > 0) {
-        await fetchProductsByIds(productosIds);
-        setCachedProducts((prev) => {
-          const newCache = { ...prev };
-          products.forEach((product) => {
-            newCache[product.id] = product;
-          });
-          return newCache;
-        });
-        const ordered = productosIds
-          .map((id) => cachedProducts[id])
-          .filter(Boolean);
-        setFilteredProducts(ordered);
-      }
-    };
-
-    loadProducts();
-  }, [productosIds, fetchProductsByIds, products, cachedProducts]);
+    if (products.length > 0 && productosIds.length > 0) {
+      const ordered = productosIds
+        .map((id) => products.find((p) => p.id === id))
+        .filter(Boolean);
+      setFilteredProducts(ordered);
+    }
+  }, [products, productosIds]);
 
   const procesarMedios = (producto) => {
     const medios = [];
@@ -57,8 +44,24 @@ const Galeria1 = ({ productos: productosIds = [] }) => {
     return precios["C/U"] ? `$${precios["C/U"]}` : "Consultar";
   };
 
+  if (loading) {
+    return (
+      <div className="animate-pulse bg-gray-200 rounded p-4">
+        Cargando productos...
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
+
   if (!filteredProducts.length) {
-    return <div>Cargando productos...</div>;
+    return (
+      <div className="animate-pulse bg-gray-200 rounded p-4">
+        Actualizando productos...
+      </div>
+    );
   }
 
   return (
