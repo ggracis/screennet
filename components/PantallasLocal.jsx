@@ -309,7 +309,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
 
           {/* Grid con altura dinámica */}
           <div
-            className={`container mx-auto p-4 grid gap-4 justify-center  ${gridClasses}`}
+            className={`mx-auto p-4 md:grid gap-4 justify-center w-[95vw] md:container ${gridClasses}`}
             style={{
               gridTemplateColumns: `repeat(${localPlantilla.attributes.columnas}, 1fr)`,
               gridTemplateRows: `repeat(${localPlantilla.attributes.filas}, 1fr)`,
