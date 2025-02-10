@@ -1,6 +1,7 @@
 import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
+import { ProductProvider } from "@/contexts/ProductContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -15,12 +16,13 @@ const geistMono = localFont({
 
 export const metadata = {
   title: "SCREEN.NET",
-  description: "¡Hazlo más fácil y poderoso con SCREENET! Gestiona y personaliza las pantallas de tu negocio desde un solo lugar.",
+  description:
+    "¡Hazlo más fácil y poderoso con SCREENET! Gestiona y personaliza las pantallas de tu negocio desde un solo lugar.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -30,7 +32,7 @@ export default function RootLayout({ children }) {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <ProductProvider>{children}</ProductProvider>
         </ThemeProvider>
       </body>
     </html>

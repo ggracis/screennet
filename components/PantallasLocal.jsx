@@ -6,7 +6,6 @@ import useProductStore from "@/stores/useProductStore";
 import useScreenStore from "@/stores/useScreenStore";
 import Image from "next/image";
 import FontLoader from "@/components/ui/FontLoader";
-import { ProductProvider } from "@/contexts/ProductContext";
 
 const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
   const [localPlantilla, setLocalPlantilla] = useState(null);
@@ -18,19 +17,6 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
   const [footerHeight, setFooterHeight] = useState(0);
   const [componentes, setComponentes] = useState([]);
   const cache = {};
-
-  const [productsState, setProductsState] = useState({
-    products: [],
-    loading: true,
-    error: null,
-  });
-
-  const {
-    initializePolling,
-    cleanup: cleanupProducts,
-    fetchAllProducts,
-    products,
-  } = useProductStore();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,8 +34,6 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
           if (data.error) {
             throw new Error(data.error);
           }
-
-          console.log("Datos recibidos de la API:", data);
 
           if (!data.pantalla) {
             throw new Error("No se encontraron datos de la pantalla");
@@ -70,15 +54,6 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
             };
           }
           setLocalPlantilla(plantilla);
-
-          console.log("✅ Pantalla cargada correctamente");
-
-          if (products.length === 0) {
-            console.log("📦 Solicitando carga inicial de productos");
-            await fetchAllProducts();
-          }
-
-          initializePolling();
         } catch (err) {
           console.error("❌ Error cargando pantalla:", err.message);
           setError(err.message);
@@ -89,19 +64,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
     };
 
     fetchData();
-
-    return () => {
-      console.log("🧹 Limpiando recursos de pantalla");
-      cleanupProducts();
-    };
-  }, [
-    pantallaId,
-    plantillaPreview,
-    fetchAllProducts,
-    initializePolling,
-    cleanupProducts,
-    products.length,
-  ]);
+  }, [pantallaId, plantillaPreview]);
 
   useEffect(() => {
     const fetchComponentes = async () => {
@@ -116,33 +79,6 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
 
     fetchComponentes();
   }, []);
-
-  useEffect(() => {
-    const loadAllProducts = async () => {
-      try {
-        setProductsState((prev) => ({ ...prev, loading: true }));
-        const products = await fetchAllProducts();
-        setProductsState({
-          products,
-          loading: false,
-          error: null,
-        });
-        initializePolling();
-      } catch (error) {
-        setProductsState({
-          products: [],
-          loading: false,
-          error: error.message,
-        });
-      }
-    };
-
-    loadAllProducts();
-
-    return () => {
-      cleanupProducts();
-    };
-  }, [fetchAllProducts, initializePolling, cleanupProducts]);
 
   if (loading) {
     return <div>Cargando...</div>;
@@ -235,7 +171,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
   ].filter(Boolean); // Solo fuentes que existan
 
   return (
-    <ProductProvider>
+    <>
       <FontLoader fonts={configuredFonts} />
       <div
         className={containerClasses}
@@ -373,7 +309,7 @@ const PantallasLocal = ({ pantallaId, plantillaPreview, preview = false }) => {
           </div>
         </div>
       </div>
-    </ProductProvider>
+    </>
   );
 };
 
