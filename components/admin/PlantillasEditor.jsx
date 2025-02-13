@@ -802,31 +802,39 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const plantillaData = {
-      data: {
-        nombre,
-        descripcion,
-        componentes: {
-          header: selectedHeader?.id || null,
-          footer: selectedFooter?.id || null,
-          espacios,
-          config_componentes: configComponentes,
-          // Agregar configuración de tipografía dentro del objeto componentes
-          config_global: {
-            tipografia: {
-              titulos: titleFont,
-              textos: textFont,
+    try {
+      setIsLoading(true); // Agregar estado de carga
+
+      // Validar datos requeridos
+      if (!nombre || !columnas || !filas) {
+        throw new Error("El nombre, columnas y filas son obligatorios");
+      }
+
+      const plantillaData = {
+        data: {
+          nombre,
+          descripcion,
+          componentes: {
+            header: selectedHeader?.id || null,
+            footer: selectedFooter?.id || null,
+            espacios,
+            config_componentes: configComponentes,
+            config_global: {
+              tipografia: {
+                titulos: titleFont,
+                textos: textFont,
+              },
             },
           },
+          columnas: parseInt(columnas),
+          filas: parseInt(filas),
+          fondo1,
+          overlayOpacity: parseInt(overlayOpacity),
         },
-        columnas,
-        filas,
-        fondo1,
-        overlayOpacity,
-      },
-    };
+      };
 
-    try {
+      console.log("Enviando datos:", JSON.stringify(plantillaData, null, 2));
+
       const url = isNewPlantilla ? "/api/plantillas" : `/api/plantillas/${id}`;
       const method = isNewPlantilla ? "POST" : "PUT";
 
@@ -838,11 +846,10 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
         body: JSON.stringify(plantillaData),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || "Error desconocido al procesar la plantilla"
-        );
+        throw new Error(responseData.error || "Error al procesar la plantilla");
       }
 
       toast({
@@ -852,23 +859,21 @@ const PlantillasEditor = ({ isNewPlantilla }) => {
           : "Plantilla actualizada correctamente",
       });
 
-      // Si es una nueva plantilla, redirigir
       if (isNewPlantilla) {
         router.push("/admin/plantillas");
       } else {
-        // Si estamos editando, actualizar los datos localmente
-        await fetchPlantilla(); // Recargar los datos de la plantilla
-        setPreviewKey((prev) => prev + 1); // Forzar actualización del preview
+        await fetchPlantilla();
+        setPreviewKey((prev) => prev + 1);
       }
     } catch (error) {
-      console.error("Error processing plantilla:", error);
+      console.error("Error detallado:", error);
       toast({
         title: "Error",
-        description: `Error al ${
-          isNewPlantilla ? "crear" : "actualizar"
-        } la plantilla: ${error.message}`,
+        description: error.message || "Error al procesar la plantilla",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 

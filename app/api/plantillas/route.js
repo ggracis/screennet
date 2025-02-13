@@ -55,30 +55,40 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const data = await request.json();
-
   try {
-    const response = await fetch(`${process.env.STRAPI_URL}/api/plantillas`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.STRAPI_TOKEN}`,
-      },
-      body: JSON.stringify(data), // Enviar los datos tal cual vienen del cliente
-    });
+    const data = await request.json();
+    console.log("Datos recibidos:", JSON.stringify(data, null, 2));
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/plantillas`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+        },
+        body: JSON.stringify(data),
+      }
+    );
 
     if (!response.ok) {
+      const errorData = await response.text();
+      console.error("Error response from Strapi:", errorData);
       throw new Error(
-        `Error al crear plantilla: ${response.status} ${response.statusText}`
+        `Error al crear plantilla: ${response.status} ${errorData}`
       );
     }
 
     const createdData = await response.json();
     return NextResponse.json(createdData);
   } catch (error) {
-    console.error("Error en la creación de plantilla:", error);
+    console.error("Error detallado en la creación de plantilla:", error);
     return NextResponse.json(
-      { error: "Error interno del servidor", details: error.message },
+      {
+        error: "Error al crear la plantilla",
+        details: error.message,
+        timestamp: new Date().toISOString(),
+      },
       { status: 500 }
     );
   }
